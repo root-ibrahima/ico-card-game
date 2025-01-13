@@ -1,72 +1,75 @@
-import React, { createContext, useReducer, useContext } from "react";
-import type { Player } from "@/types";
+"use client";
 
-type Status = "idle" | "active" | "completed"; // Ajout du type Status
+import React, { createContext, useContext, useReducer, Dispatch } from "react";
 
-// Définition de l'état global du jeu
-interface GameState {
-  players: Player[];
-  currentTurn: number;
-  status: Status; // Utilisation du type Status
-}
+// Types pour le jeu
+export type GameStatus = "idle" | "active" | "finished";
 
-// Définition des actions possibles
-type Action =
-  | { type: "ADD_PLAYER"; payload: Player }
-  | { type: "REMOVE_PLAYER"; payload: string }
-  | { type: "UPDATE_STATUS"; payload: Status }
-  | { type: "NEXT_TURN" };
+export type Player = {
+  id: string; // ID unique du joueur
+  name: string; // Nom du joueur
+  role: string; // Rôle du joueur (ex. : marin, pirate, sirène)
+  isCaptain: boolean; // Indique si le joueur est Capitaine
+};
 
 // État initial du jeu
+type GameState = {
+  players: Player[]; // Liste des joueurs
+  currentTurn: number; // Tour actuel (index des joueurs)
+  status: GameStatus; // Statut du jeu
+};
+
 const initialState: GameState = {
   players: [],
   currentTurn: 0,
   status: "idle",
 };
 
-// Réducteur pour gérer les actions
+// Types des actions possibles
+export type Action =
+  | { type: "ADD_PLAYER"; payload: Player }
+  | { type: "REMOVE_PLAYER"; payload: string }
+  | { type: "NEXT_TURN" }
+  | { type: "UPDATE_STATUS"; payload: GameStatus };
+
+// Reducer pour gérer l'état du jeu
 const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case "ADD_PLAYER":
-      return { ...state, players: [...state.players, action.payload] };
-
+      return {
+        ...state,
+        players: [...state.players, action.payload],
+      };
     case "REMOVE_PLAYER":
       return {
         ...state,
         players: state.players.filter((player) => player.id !== action.payload),
       };
-
+    case "NEXT_TURN":
+      return {
+        ...state,
+        currentTurn: (state.currentTurn + 1) % state.players.length,
+      };
     case "UPDATE_STATUS":
-      return { ...state, status: action.payload };
-
-    case "NEXT_TURN": {
-      if (state.players.length === 0) return state;
-
-      const nextTurn = (state.currentTurn + 1) % state.players.length;
-
-      const updatedPlayers = state.players.map((player, index) => ({
-        ...player,
-        isCaptain: index === nextTurn, // Le capitaine change à chaque tour
-      }));
-
-      return { ...state, players: updatedPlayers, currentTurn: nextTurn };
-    }
-
+      return {
+        ...state,
+        status: action.payload,
+      };
     default:
       return state;
   }
 };
 
-// Contexte global du jeu
+// Création du contexte
 const GameContext = createContext<{
   state: GameState;
-  dispatch: React.Dispatch<Action>;
+  dispatch: Dispatch<Action>;
 }>({
   state: initialState,
-  dispatch: () => undefined,
+  dispatch: () => null, // Par défaut, une fonction vide
 });
 
-// Fournisseur de contexte
+// Provider pour encapsuler l'application
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {

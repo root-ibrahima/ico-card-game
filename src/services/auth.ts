@@ -33,13 +33,13 @@ export const logout = () => {
   localStorage.removeItem("token");
 };
 
-// Fonction pour vérifier si un utilisateur est authentifié
+// Fonction pour vérifier l'authentification
 export const isAuthenticated = (): boolean => {
   const token = localStorage.getItem("token");
   return !!token;
 };
 
-// Fonction pour récupérer les infos utilisateur
+// Fonction pour récupérer l'utilisateur actuel
 export const fetchUser = async () => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("Utilisateur non authentifié");
