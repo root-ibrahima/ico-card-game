@@ -1,42 +1,63 @@
-import React, { createContext, useContext, useReducer } from "react";
+import React, { createContext, useReducer, useContext } from "react";
+import type { Player } from "@/types";
 
-interface Player {
-  id: string;
-  name: string;
-  role?: "marin" | "pirate" | "sirène";
-}
+type Status = "idle" | "active" | "completed"; // Ajout du type Status
 
+// Définition de l'état global du jeu
 interface GameState {
   players: Player[];
-  status: "waiting" | "in-progress" | "finished";
+  currentTurn: number;
+  status: Status; // Utilisation du type Status
 }
 
+// Définition des actions possibles
 type Action =
   | { type: "ADD_PLAYER"; payload: Player }
   | { type: "REMOVE_PLAYER"; payload: string }
-  | { type: "UPDATE_STATUS"; payload: GameState["status"] };
+  | { type: "UPDATE_STATUS"; payload: Status }
+  | { type: "NEXT_TURN" };
 
+// État initial du jeu
 const initialState: GameState = {
   players: [],
-  status: "waiting",
+  currentTurn: 0,
+  status: "idle",
 };
 
-function gameReducer(state: GameState, action: Action): GameState {
+// Réducteur pour gérer les actions
+const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case "ADD_PLAYER":
       return { ...state, players: [...state.players, action.payload] };
+
     case "REMOVE_PLAYER":
       return {
         ...state,
         players: state.players.filter((player) => player.id !== action.payload),
       };
+
     case "UPDATE_STATUS":
       return { ...state, status: action.payload };
+
+    case "NEXT_TURN": {
+      if (state.players.length === 0) return state;
+
+      const nextTurn = (state.currentTurn + 1) % state.players.length;
+
+      const updatedPlayers = state.players.map((player, index) => ({
+        ...player,
+        isCaptain: index === nextTurn, // Le capitaine change à chaque tour
+      }));
+
+      return { ...state, players: updatedPlayers, currentTurn: nextTurn };
+    }
+
     default:
       return state;
   }
-}
+};
 
+// Contexte global du jeu
 const GameContext = createContext<{
   state: GameState;
   dispatch: React.Dispatch<Action>;
@@ -45,7 +66,10 @@ const GameContext = createContext<{
   dispatch: () => undefined,
 });
 
-export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Fournisseur de contexte
+export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
   return (
@@ -55,4 +79,5 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// Hook personnalisé pour utiliser le contexte
 export const useGame = () => useContext(GameContext);

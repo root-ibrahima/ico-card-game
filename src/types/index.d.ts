@@ -1,7 +1,14 @@
-export type Role = 'marin' | 'pirate' | 'sirène';
+export type Role = "marin" | "pirate" | "sirène";
+
 
 export interface Player {
-  id: number;
+
+  id: string;
+
   name: string;
-  role?: Role;
+
+  role: Role;
+
+  isCaptain: boolean;
+
 }

@@ -1,24 +1,26 @@
-'use client';
+"use client";
 
-import React from 'react';
-import GameBoard from '@/components/GameBoard';
+import React, { useState } from "react";
+import GameBoard from "@/components/GameBoard";
 
 interface Player {
-  id: number;
+  id: string;
   name: string;
-  role: 'marin' | 'pirate' | 'sirène' | undefined;
+  role: "marin" | "pirate" | "sirène"; // Suppression du type `undefined` pour plus de sécurité
+  isCaptain: boolean;
 }
 
 const GamePage: React.FC = () => {
-  const players: Player[] = [
-    { id: 1, name: 'Alice', role: 'marin' },
-    { id: 2, name: 'Bob', role: 'pirate' },
-  ];
+  // État local pour les joueurs
+  const [players] = useState<Player[]>([
+    { id: "1", name: "Alice", role: "marin", isCaptain: false },
+    { id: "2", name: "Bob", role: "pirate", isCaptain: false },
+  ]);
 
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-4">Jeu ICO 🎮</h1>
-      <GameBoard players={players} />
+      <GameBoard players={players} /> {/* Passez les joueurs à GameBoard */}
     </div>
   );
 };

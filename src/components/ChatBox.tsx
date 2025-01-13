@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const ChatBox: React.FC = () => {
   return (
@@ -8,7 +8,16 @@ const ChatBox: React.FC = () => {
         <p>Alice : Bonjour !</p>
         <p>Bob : Salut tout le monde.</p>
       </div>
-      <input type="text" placeholder="Message..." className="border p-2 w-full" />
+      <div className="flex">
+        <input
+          type="text"
+          placeholder="Message..."
+          className="border p-2 flex-grow"
+        />
+        <button className="bg-blue-500 text-white px-4 ml-2 rounded">
+          Envoyer
+        </button>
+      </div>
     </div>
   );
 };
