@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar"; // Import du composant Navbar
 
 // Import des polices avec une gestion robuste
 const geistSans = Geist({
@@ -24,14 +25,18 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode; 
+  children: React.ReactNode;
 }) {
   return (
     <html lang="fr">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900`}
       >
-        {children}
+        {/* Ajout de la barre de navigation */}
+        <Navbar />
+
+        {/* Contenu principal */}
+        <main>{children}</main>
       </body>
     </html>
   );
