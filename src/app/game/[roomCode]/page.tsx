@@ -1,7 +1,8 @@
+import { NextApiRequest } from "next";
 import React from "react";
 
 interface GameRoomPageProps {
-  params: { roomCode: string };
+  params: { roomCode: NextApiRequest["query"]["roomCode"] };
 }
 
 const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
