@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { CommandeStatus } from '@prisma/client';
 
-const statusMap: Record<string, CommandeStatus> = {
-  pending: CommandeStatus.EN_ATTENTE,
-  shipped: CommandeStatus.EXPEDIEE,
-  delivered: CommandeStatus.LIVREE,
-  cancelled: CommandeStatus.ANNULEE,
-};
+interface UserProfileData {
+  userId: string;
+  username?: string;
+  email?: string;
+  password?: string;
+  imagePath?: string;
+}
 
-async function updateUserProfile(data: any) {
+async function updateUserProfile(data: UserProfileData) {
   const { userId, username, email, password, imagePath } = data;
 
   console.log('Mise à jour du profil utilisateur avec les données:', data); // Log des données
@@ -24,7 +24,7 @@ async function updateUserProfile(data: any) {
     );
   }
 
-  const updateData: any = {};
+  const updateData: Partial<{ username: string; email: string; password: string; image: { connect: { id: number } } }> = {};
   if (username) updateData.username = username;
   if (email) updateData.email = email;
   if (password) updateData.password = password;
@@ -85,7 +85,7 @@ export async function PUT(req: NextRequest) {
   } catch (error) {
     console.error('Erreur API:', error);
     return NextResponse.json(
-      { message: 'Erreur interne du serveur.', error: (error as any).message },
+      { message: 'Erreur interne du serveur.', error: (error instanceof Error ? error.message : 'Unknown error') },
       { status: 500 }
     );
   }
