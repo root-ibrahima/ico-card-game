@@ -1,26 +1,25 @@
-import prisma from "@/lib/prisma"; 
+import prisma from "@/lib/prisma";
 
 async function main() {
-  // Crée une nouvelle salle
-  const room = await prisma.room.create({
+  // Ajouter une nouvelle salle
+  const newRoom = await prisma.room.create({
     data: {
-      host: "Alice",
-      status: "WAITING",
+      host: "Test Host", // Nom de l'hôte
+      status: "WAITING", // Statut de la salle
     },
   });
+  console.log("Nouvelle salle créée :", newRoom);
 
-  console.log("Nouvelle salle créée :", room);
-
-  // Liste toutes les salles
+  // Récupérer toutes les salles
   const rooms = await prisma.room.findMany();
-  console.log("Toutes les salles :", rooms);
+  console.log("Salles dans la base de données :", rooms);
 }
 
 main()
   .catch((e) => {
-    console.error("Erreur :", e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prisma.$disconnect(); // Fermer proprement la connexion
   });
