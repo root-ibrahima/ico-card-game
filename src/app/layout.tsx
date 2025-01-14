@@ -10,20 +10,6 @@ const geistSans = Geist({
   display: "swap", // Optimise le chargement des polices
 });
 
-"use client";
-import { SessionProvider } from "next-auth/react";
-
-export default function RootLayout({ children }) {
-  return (
-    <SessionProvider>
-      <html lang="fr">
-        <body>{children}</body>
-      </html>
-    </SessionProvider>
-  );
-}
-
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
