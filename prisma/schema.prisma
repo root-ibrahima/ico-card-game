@@ -3,33 +3,34 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Connexion pour les requêtes
+  directUrl = env("DIRECT_URL")   // Connexion directe pour les migrations
 }
 
 // Modèle Room
 model Room {
-  id        String    @id @default(uuid())
+  id        String     @id @default(uuid())
   host      String
-  status    RoomStatus @default(WAITING)
+  status    RoomStatus @default(WAITING) // Par défaut, la salle est "en attente"
   players   Player[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime   @default(now())   // Date de création
+  updatedAt DateTime   @updatedAt       // Mise à jour automatique
 }
 
 // Modèle Player
 model Player {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
   role      String
-  roomId    String
-  room      Room    @relation(fields: [roomId], references: [id])
+  roomId    String   // Clé étrangère pour associer un joueur à une Room
+  room      Room     @relation(fields: [roomId], references: [id]) // Relation avec Room
   createdAt DateTime @default(now())
 }
 
-// Enum RoomStatus
+// Enumération RoomStatus
 enum RoomStatus {
-  WAITING
-  IN_PROGRESS
-  FINISHED
+  WAITING       // Salle en attente de joueurs
+  IN_PROGRESS   // Partie en cours
+  FINISHED      // Partie terminée
 }
