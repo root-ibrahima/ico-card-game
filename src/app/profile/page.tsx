@@ -4,7 +4,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { Chart, LineElement, CategoryScale, LinearScale, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import Link from 'next/link';
@@ -28,7 +28,14 @@ function ProfileContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [stats, setStats] = useState<any>(null);
+  interface Stats {
+    purchaseHistory: { date: string; total: number }[];
+    ordersThisMonth: number;
+    totalSpent: number;
+    favoriteItems: number;
+  }
+
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState('');
 
@@ -67,11 +74,11 @@ function ProfileContent() {
 
   // Données pour le graphique
   const chartData = {
-    labels: stats?.purchaseHistory?.map((item: any) => item.date) || [],
+    labels: stats?.purchaseHistory?.map((item: { date: string; total: number }) => item.date) || [],
     datasets: [
       {
         label: 'Achats journaliers',
-        data: stats?.purchaseHistory?.map((item: any) => item.total) || [],
+        data: stats?.purchaseHistory?.map((item: { date: string; total: number }) => item.total) || [],
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 1,

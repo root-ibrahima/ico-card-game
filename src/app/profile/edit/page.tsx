@@ -5,7 +5,7 @@
 import { useSession, SessionProvider } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import LoadingSpinner from '../../../components/LoadingSpinner';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 function EditProfilePageContent() {
   const { data: session, status } = useSession();
@@ -54,7 +54,7 @@ function EditProfilePageContent() {
       } else {
         setErrorMessage(data.message || 'Erreur lors de la mise à jour');
       }
-    } catch (error) {
+    } catch {
       setErrorMessage('Une erreur s\'est produite');
     } finally {
       setIsSubmitting(false);
@@ -87,7 +87,7 @@ function EditProfilePageContent() {
                 alt="Avatar Preview"
                 className="w-24 h-24 rounded-full mx-auto object-cover shadow-lg"
               />
-              <span className="text-indigo-600 block mt-2">Changer l'image</span>
+              <span className="text-indigo-600 block mt-2">Changer l&apos;image</span>
             </label>
             <input
               type="file"
