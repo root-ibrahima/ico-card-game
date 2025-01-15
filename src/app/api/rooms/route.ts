@@ -1,115 +1,74 @@
-import { Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Interfaces pour étendre WebSocket et Server
-interface ExtendedWebSocket extends WebSocket {
-    roomCode?: string;
-}
+/**
+ * Gestion de la méthode POST pour créer un hôte.
+ */
+export async function POST(req: Request) {
+    try {
+        const body = await req.json();
 
-interface ExtendedServer extends Server {
-    wss?: WebSocketServer;
-}
+        // Validation des données
+        if (!body || typeof body.name !== "string" || !body.name.trim()) {
+            console.error("Le body de la requête est invalide :", body);
+            return NextResponse.json(
+                { error: "Le champ 'name' est requis et doit être une chaîne non vide." },
+                { status: 400 }
+            );
+        }
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-    if (req.method !== "GET") {
-        res.status(405).json({ error: "Method not allowed" });
-        return;
-    }
+        const { name, roomId } = body;
 
-    const server = (res.socket as typeof res.socket & { server: ExtendedServer }).server;
+        // Si roomId n'est pas fourni, utilisez une valeur par défaut ou générez-en une
+        const roomIdentifier = roomId || "defaultRoomId";
 
-    if (!server.wss) {
-        server.wss = new WebSocketServer({ server });
-
-        server.wss.on("connection", async (ws: ExtendedWebSocket) => {
-            console.log("Client connecté via WebSocket");
-
-            ws.on("message", async (message: string) => {
-                try {
-                    const data = JSON.parse(message);
-
-                    if (data.type === "CREATE_ROOM") {
-                        // Créer une nouvelle room dans Prisma
-                        const newRoom = await prisma.room.create({
-                            data: {
-                                host: data.host,
-                                status: "WAITING",
-                            },
-                        });
-
-                        ws.roomCode = newRoom.id;
-                        ws.send(JSON.stringify({ type: "ROOM_CREATED", payload: newRoom }));
-                        console.log(`Room créée avec ID : ${newRoom.id}`);
-                    }
-
-                    if (data.type === "JOIN_ROOM") {
-                        const room = await prisma.room.findUnique({
-                            where: { id: data.roomCode },
-                        });
-
-                        if (!room) {
-                            ws.send(JSON.stringify({ type: "ERROR", message: "Room not found" }));
-                            return;
-                        }
-
-                        ws.roomCode = data.roomCode;
-
-                        // Ajouter un joueur à la room
-                        const newPlayer = await prisma.player.create({
-                            data: {
-                                name: data.username,
-                                role: data.role || "participant",
-                                roomId: data.roomCode,
-                            },
-                        });
-
-                        ws.send(
-                            JSON.stringify({
-                                type: "JOINED_ROOM",
-                                payload: { room, player: newPlayer },
-                            })
-                        );
-
-                        console.log(`Joueur ajouté : ${data.username} à la room ${data.roomCode}`);
-                    }
-
-                    if (data.type === "SEND_MESSAGE") {
-                        // Diffuser un message à tous les clients dans la même room
-                        server.wss?.clients.forEach((client: ExtendedWebSocket) => {
-                            if (client.roomCode === data.roomCode && client !== ws) {
-                                client.send(
-                                    JSON.stringify({
-                                        type: "NEW_MESSAGE",
-                                        payload: data.payload,
-                                    })
-                                );
-                            }
-                        });
-                    }
-                } catch (error) {
-                    console.error("Erreur lors du traitement du message :", error);
-                    ws.send(
-                        JSON.stringify({
-                            type: "ERROR",
-                            message: "An error occurred while processing your request",
-                        })
-                    );
-                }
-            });
-
-            ws.on("close", () => {
-                console.log("Client déconnecté");
-            });
+        // Créer un nouvel hôte et associer une room
+        const newHost = await prisma.player.create({
+            data: {
+                name,
+                role: "host", // Par défaut, l'utilisateur est un hôte
+                room: {
+                    connectOrCreate: {
+                        where: { id: roomIdentifier },
+                        create: { id: roomIdentifier, host: name, status: "WAITING" },
+                    },
+                },
+            },
         });
 
-        console.log("WebSocket Server initialisé");
+        return NextResponse.json(newHost, { status: 201 });
+    } catch (error) {
+        console.error("Erreur lors de la création de l'hôte :", error);
+        return NextResponse.json(
+            {
+                error: "Erreur interne du serveur.",
+                details: error instanceof Error ? error.message : "Erreur inconnue",
+            },
+            { status: 500 }
+        );
     }
+}
 
-    res.end();
-};
+/**
+ * Gestion de la méthode GET pour lister les hôtes.
+ */
+export async function GET() {
+    try {
+        // Récupérer tous les hôtes et leurs rooms associées
+        const hosts = await prisma.player.findMany({
+            include: {
+                room: true, // Inclure les détails de la room associée
+            },
+        });
 
-export default handler;
+        return NextResponse.json(hosts, { status: 200 });
+    } catch (error) {
+        console.error("Erreur lors de la récupération des hôtes :", error);
+        return NextResponse.json(
+            { error: "Erreur interne du serveur." },
+            { status: 500 }
+        );
+    }
+}

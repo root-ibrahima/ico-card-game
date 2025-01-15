@@ -9,9 +9,9 @@ datasource db {
 
 // Modèle Room
 model Room {
-  id        String    @id @default(uuid())
+  id        String    @id @default(cuid())
   host      String
-  status    RoomStatus @default(WAITING)
+  status    String
   players   Player[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -19,12 +19,13 @@ model Room {
 
 // Modèle Player
 model Player {
-  id        String  @id @default(uuid())
+  id        String  @id @default(cuid())
   name      String
   role      String
   roomId    String
   room      Room    @relation(fields: [roomId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Enum RoomStatus
