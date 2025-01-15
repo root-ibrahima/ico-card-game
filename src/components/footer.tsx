@@ -67,20 +67,20 @@ const Footer: React.FC = () => {
 
           {/* Bouton Profil */}
           <Link
-            href="/profil"
+            href="/profile"
             className="flex flex-col items-center text-gray-600 hover:text-gray-800 transition duration-300"
           >
             <Image
               src={
-                pathname === "/profil"
+                pathname === "/profile"
                   ? "/navbar/press/profil.png"
                   : "/navbar/nopress/profil.png"
               }
               alt="Profil"
-              width={pathname === "/profil" ? 24 : 24}
-              height={pathname === "/profil" ? 24 : 24}
+              width={pathname === "/profile" ? 24 : 24}
+              height={pathname === "/profile" ? 24 : 24}
             />
-            <span className="sr-only">Profil</span>
+            <span className="sr-only">Profile</span>
           </Link>
         </div>
       </div>
