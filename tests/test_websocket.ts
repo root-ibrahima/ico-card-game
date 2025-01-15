@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 
-const socket = new WebSocket("ws://localhost:3000/api/socket");
+const socket = new WebSocket("ws://localhost:4000");
 
 socket.on("open", () => {
     console.log("Connexion ouverte");
