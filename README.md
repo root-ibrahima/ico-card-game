@@ -89,6 +89,18 @@ Configurer Prisma : Synchronisez les modèles Prisma avec la base de données :
 npx prisma migrate dev
 ```
 
+Générer le client Prisma :
+
+```bash
+npx prisma generate
+```
+
+Vérifier le schéma Prisma :
+
+```bash
+npx prisma validate
+```
+
 Démarrer le projet en mode développement :
 
 ```bash
@@ -144,6 +156,8 @@ Permet la gestion en temps réel des joueurs et des mises à jour des salles.
 ## 🧪 Tests WebSocket
 
 Le projet inclut un serveur WebSocket pour gérer les salles et la communication en temps réel. Voici comment tester ces fonctionnalités.
+
+![alt text](image.png)
 
 1. Connexion au serveur WebSocket
     Utilisez wscat pour vous connecter au serveur WebSocket :
