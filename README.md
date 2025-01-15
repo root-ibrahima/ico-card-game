@@ -182,3 +182,4 @@ Ce projet est sous licence MIT. Consultez le fichier LICENSE pour plus de détai
 - [Ibrahima](https://github.com/ibrahima-eemi)
 - Sebastian OONISE
 - Damien DA SILVA
+- Alexandre MEME
