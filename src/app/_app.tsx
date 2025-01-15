@@ -1,15 +1,11 @@
 import { GameProvider } from "@/context/GameContext";
-import { AppProps } from 'next/app';
-import { SessionProvider } from "next-auth/react";
 
-function App({ Component, pageProps }: AppProps) {
+import { AppProps } from 'next/app';
+
+export default function App({ Component, pageProps }: AppProps) {
   return (
-    <SessionProvider session={pageProps.session}>
-      <GameProvider>
-        <Component {...pageProps} />
-      </GameProvider>
-    </SessionProvider>
+    <GameProvider>
+      <Component {...pageProps} />
+    </GameProvider>
   );
 }
-
-export default App;
