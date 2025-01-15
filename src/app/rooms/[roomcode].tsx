@@ -1,5 +1,4 @@
-// src/lib/socket.ts
-import { RoomEvent } from "@/types/index"; 
+import { RoomEvent } from "@/types/index";
 
 const socket = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_URL || "");
 
@@ -52,4 +51,3 @@ export const disconnectSocket = () => {
     socket.close();
   }
 };
-

@@ -14,8 +14,12 @@ export interface Room {
 export interface RoomEvent {
   type: "PLAYER_JOINED" | "ROOM_UPDATE" | "PLAYER_LEFT" | "NEW_MESSAGE";
   payload: {
-    roomCode?: string;
-    [key: string]: unknown;
+    roomCode?: string; 
+    message?: string;
+    username?: string;
+    players?: string[]; 
+    [key: string]: unknown; 
   };
 }
+
 
