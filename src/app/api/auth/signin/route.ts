@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server';
-import { signIn } from 'next-auth/react';
+import { supabase } from '@/lib/supabaseClient';
 
-// Cette route est une route POST qui peut être appelée pour gérer l'authentification.
 export async function POST(req: Request) {
   try {
-    // Récupérer les données de la requête
-    const body = await req.json();
-    const { email } = body;
+    const { email, password } = await req.json();
 
-    // Appeler la fonction signIn de next-auth
-    const result = await signIn('email', { redirect: false, email });
+    // Connexion via Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (result?.ok) {
-      return NextResponse.json({ message: 'Connexion réussie', status: 'success' });
-    } else {
-      return NextResponse.json({ message: 'Échec de la connexion', status: 'error' }, { status: 401 });
+    if (error) {
+      return NextResponse.json({ message: error.message }, { status: 401 });
     }
+
+    return NextResponse.json({ message: 'Connexion réussie', user: data.user }, { status: 200 });
   } catch (error) {
+    console.error('Erreur lors de la connexion :', error);
     return NextResponse.json({ message: 'Erreur interne du serveur', error: (error as Error).message }, { status: 500 });
   }
 }

@@ -17,24 +17,26 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
+  
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
         headers: { 'Content-Type': 'application/json' },
       });
-
+  
       if (res.ok) {
         router.push('/auth/signin');
       } else {
-        setError("Erreur lors de l'inscription. Veuillez réessayer.");
+        const errorData = await res.json();
+        setError(errorData.message || "Erreur lors de l'inscription. Veuillez réessayer.");
       }
     } catch (error) {
       console.error('Erreur lors de l\'inscription :', error);
       setError("Erreur interne. Veuillez réessayer plus tard.");
     }
   };
+  
 
   return (
     <>
