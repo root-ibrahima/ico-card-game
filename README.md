@@ -180,4 +180,5 @@ Ce projet est sous licence MIT. Consultez le fichier LICENSE pour plus de détai
 ## 👨‍💻 Auteurs
 
 - [Ibrahima](https://github.com/ibrahima-eemi)
-- Collaborateurs :
+- Sebastian OONISE
+- Damien DA SILVA

@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const ThemeSwitcher: React.FC = () => {
   const [isDark, setIsDark] = useState(false);
