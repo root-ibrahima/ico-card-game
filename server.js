@@ -1,6 +1,6 @@
 const { WebSocketServer } = require("ws");
 
-const port = 4000;
+const port = 5000;
 const wss = new WebSocketServer({ port });
 const rooms = {}; // Stocke les connexions par room
 

@@ -17,20 +17,38 @@ const EMOJIS = ["😃", "🎉", "🚀", "🔥", "💥", "🌟", "🤩", "🎮", 
 
 const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
   const roomCode = params.roomCode;
-  const storedUsername = localStorage.getItem("username");
-
-  // Générer un username une seule fois pour un utilisateur
-  const [username] = useState(
-    storedUsername || `User-${Math.floor(Math.random() * 1000)}`
-  );
-
+  const [username, setUsername] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
 
+  // Générer un username unique et le stocker dans localStorage
   useEffect(() => {
-    localStorage.setItem("username", username); // Sauvegarde du username
+    if (typeof window !== "undefined") {
+      const storedUsername = localStorage.getItem("username");
+      if (!storedUsername) {
+        const newUsername = `User-${Math.floor(Math.random() * 1000)}`;
+        localStorage.setItem("username", newUsername);
+        setUsername(newUsername);
+      } else {
+        setUsername(storedUsername);
+      }
+    }
+  }, []);
 
-    const handleRoomEvent = (data: RoomEvent & { username?: string }) => {
+  useEffect(() => {
+    if (!username) return; // Attendre que le username soit défini
+
+    const handleRoomEvent = (data: RoomEvent & { username?: string; players?: Player[] }) => {
       console.log("🎮 Log reçu :", data);
+
+      if (data.type === "ROOM_UPDATE" && data.players) {
+        // Met à jour la liste des joueurs déjà présents
+        setPlayers(
+          data.players.map((player) => ({
+            username: player.username,
+            avatar: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+          }))
+        );
+      }
 
       if (data.type === "PLAYER_JOINED" && data.username) {
         setPlayers((prev) => {
@@ -55,6 +73,8 @@ const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
       disconnectSocket();
     };
   }, [roomCode, username]);
+
+  if (!username) return <p>Chargement...</p>;
 
   return (
     <main className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-blue-500 to-indigo-600 text-white">
