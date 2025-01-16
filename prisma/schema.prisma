@@ -1,36 +1,52 @@
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String
-  password  String
-  createdAt DateTime @default(now())
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
-  players   Player[]
-  rooms     Room[]   @relation("HostRooms")
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  username    String
+  password    String
+  createdAt   DateTime @default(now())
+  players     Player[]
+  hostedRooms Room[]   @relation("HostRooms")
+  sessions    Session?
+  rooms       Room[]   @relation("PlayerRooms")
 }
 
 model Room {
   id        String     @id @default(uuid())
-  hostId    String     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  sessionId String?    @unique
+  hostId    String
   status    RoomStatus @default(WAITING)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-
   players   Player[]
-  host      User       @relation("HostRooms", fields: [hostId], references: [id])
+  host      User       @relation("HostRooms", fields: [hostId], references: [id], onDelete: Cascade)
+  members   User[]     @relation("PlayerRooms")
 }
 
 model Player {
   id        String   @id @default(uuid())
   name      String
   role      String
-  roomId    String   @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  userId    String   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomId    String
+  userId    String
   isReady   Boolean  @default(false)
   createdAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  room      Room
-  user      User
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Card {
