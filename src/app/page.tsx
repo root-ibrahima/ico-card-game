@@ -13,7 +13,7 @@ const Home: React.FC = () => {
   const handleCreateGame = () => {
     const newRoomCode = Math.random().toString(36).substring(2, 8).toUpperCase(); // Code aléatoire
     dispatch({ type: "UPDATE_STATUS", payload: "active" }); // Met à jour le statut
-    router.push(`/game/${newRoomCode}`); // Redirection vers la nouvelle salle
+    router.push(`/rooms/${newRoomCode}`); // Redirection vers la nouvelle salle
   };
 
   // Rejoindre une partie existante
@@ -22,7 +22,7 @@ const Home: React.FC = () => {
       alert("Veuillez entrer un code de salle !");
       return;
     }
-    router.push(`/game/${roomCode.trim().toUpperCase()}`); // Redirection vers la salle existante
+    router.push(`/rooms/${roomCode.trim().toUpperCase()}`); // Redirection vers la salle existante
   };
 
   return (
@@ -57,7 +57,7 @@ const Home: React.FC = () => {
           onClick={handleJoinGame} // Lien avec la fonction de connexion
         >
           <span className="font-bold">Rejoindre une partie</span>
-          <p className="text-sm">Entrez dans une partie existante et rejoignez l'aventure</p>
+          <p className="text-sm">Entrez dans une partie existante et rejoignez l&apos;aventure</p>
         </button>
       </div>
       
@@ -100,7 +100,7 @@ const Home: React.FC = () => {
       <div className="mt-6">
         <h3 className="text-lg font-semibold">Règles du jeu</h3>
         <p className="text-sm mt-2">
-          ICO est un jeu de société numérique où pirates, marins et sirènes s'affrontent pour le contrôle d’un trésor en mer.
+          ICO est un jeu de société numérique où pirates, marins et sirènes s&apos;affrontent pour le contrôle d’un trésor en mer.
         </p>
         <button className="w-full bg-purple-500 text-white py-2 rounded-lg mt-4">En savoir plus</button>
       </div>

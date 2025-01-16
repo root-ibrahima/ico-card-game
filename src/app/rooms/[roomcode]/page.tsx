@@ -1,70 +1,76 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { connectToRoom, sendMessageToRoom, disconnectSocket, RoomEvent } from "@/lib/socket";
+import { connectToRoom, disconnectSocket } from "@/lib/socket";
+import { RoomEvent } from "@/types";
 
 interface GameRoomPageProps {
   params: { roomCode: string };
 }
 
+interface Player {
+  username: string;
+  avatar: string;
+}
+
+const EMOJIS = ["😃", "🎉", "🚀", "🔥", "💥", "🌟", "🤩", "🎮", "👾", "🦄"];
+
 const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
-  const roomCode = params.roomCode || "Inconnu";
-  const [messages, setMessages] = useState<string[]>([]);
-  const [messageInput, setMessageInput] = useState<string>("");
+  const roomCode = params.roomCode;
+  const storedUsername = localStorage.getItem("username");
+
+  // Générer un username une seule fois pour un utilisateur
+  const [username] = useState(
+    storedUsername || `User-${Math.floor(Math.random() * 1000)}`
+  );
+
+  const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    // Connexion WebSocket à la room
-    connectToRoom(roomCode, (data: RoomEvent & { sender?: string }) => {
-      if (data.type === "PLAYER_JOINED") {
-        if ('username' in data) {
-          setMessages((prev) => [...prev, `${data.username} a rejoint la salle.`]);
-        }
-      } else if (data.type === "NEW_MESSAGE") {
-        setMessages((prev) => [...prev, `${data.sender}: ${data.message}`]);
+    localStorage.setItem("username", username); // Sauvegarde du username
+
+    const handleRoomEvent = (data: RoomEvent & { username?: string }) => {
+      console.log("🎮 Log reçu :", data);
+
+      if (data.type === "PLAYER_JOINED" && data.username) {
+        setPlayers((prev) => {
+          const alreadyExists = prev.some((p) => p.username === data.username);
+          if (!alreadyExists) {
+            return [
+              ...prev,
+              {
+                username: data.username,
+                avatar: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+              },
+            ];
+          }
+          return prev;
+        });
       }
-    });
+    };
+
+    connectToRoom(roomCode, handleRoomEvent);
 
     return () => {
       disconnectSocket();
     };
-  }, [roomCode]);
-
-  const handleSendMessage = () => {
-    if (messageInput.trim() === "") return;
-    sendMessageToRoom(roomCode, { sender: "Moi", message: messageInput });
-    setMessages((prev) => [...prev, `Moi: ${messageInput}`]);
-    setMessageInput("");
-  };
+  }, [roomCode, username]);
 
   return (
-    <main className="flex flex-col items-center justify-center h-screen bg-gray-100 px-4">
-      <h1 className="text-4xl font-bold mb-4">Salle : {roomCode}</h1>
-      <p className="text-gray-700">Préparez-vous à jouer !</p>
+    <main className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-blue-500 to-indigo-600 text-white">
+      <h1 className="text-5xl font-extrabold mb-6">Salle : {roomCode}</h1>
+      <p className="text-lg text-gray-200">En attente des joueurs...</p>
 
-      <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-4 mt-6">
-        <div className="h-64 overflow-y-auto border p-2">
-          {messages.map((msg, index) => (
-            <div key={index} className="text-gray-800 text-sm">
-              {msg}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 flex">
-          <input
-            type="text"
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            placeholder="Écrire un message..."
-            className="w-full border rounded-md px-3 py-2 text-gray-700"
-          />
-          <button
-            onClick={handleSendMessage}
-            className="ml-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+      <div className="flex flex-wrap justify-center mt-10 space-x-6">
+        {players.map((player, index) => (
+          <div
+            key={index}
+            className="flex flex-col items-center bg-white text-black px-4 py-2 rounded-lg shadow-lg transform transition-all duration-500 scale-100 hover:scale-110"
           >
-            Envoyer
-          </button>
-        </div>
+            <p className="text-6xl">{player.avatar}</p>
+            <p className="text-lg font-semibold mt-2">{player.username}</p>
+          </div>
+        ))}
       </div>
     </main>
   );
