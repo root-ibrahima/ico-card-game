@@ -13,7 +13,7 @@ const Home: React.FC = () => {
   const handleCreateGame = () => {
     const newRoomCode = Math.random().toString(36).substring(2, 8).toUpperCase(); // Code aléatoire
     dispatch({ type: "UPDATE_STATUS", payload: "active" }); // Met à jour le statut
-    router.push(`/game/${newRoomCode}`); // Redirection vers la nouvelle salle
+    router.push(`/rooms/${newRoomCode}`); // Redirection vers la nouvelle salle
   };
 
   // Rejoindre une partie existante
@@ -22,7 +22,7 @@ const Home: React.FC = () => {
       alert("Veuillez entrer un code de salle !");
       return;
     }
-    router.push(`/game/${roomCode.trim().toUpperCase()}`); // Redirection vers la salle existante
+    router.push(`/rooms/${roomCode.trim().toUpperCase()}`); // Redirection vers la salle existante
   };
 
   return (

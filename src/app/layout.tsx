@@ -1,7 +1,12 @@
+'use client';
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Footer from "@/components/footer"; // Import du composant Navbar
+import Footer from "@/components/footer";
+import { usePathname } from 'next/navigation';
+import GameFooter from '@/components/GameComponents/GameFooter';
+
 
 // Import des polices avec une gestion robuste
 const geistSans = Geist({
@@ -16,17 +21,26 @@ const geistMono = Geist_Mono({
   display: "swap", // Idem pour la seconde police
 });
 
-// Métadonnées du projet
-export const metadata: Metadata = {
-  title: "ICO Card Game",
-  description: "Un jeu de cartes interactif et stratégique.",
-};
+// // Métadonnées du projet
+// export const metadata: Metadata = {
+//   title: "ICO Card Game",
+//   description: "Un jeu de cartes interactif et stratégique.",
+// };
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+    const pathname = usePathname();
+  
+    const renderFooter = () => {
+      if (pathname.startsWith('/game')) {
+        return <GameFooter />;
+      }
+      return <Footer />;
+    };
+
   return (
     <html lang="fr">
       <body
@@ -37,7 +51,9 @@ export default function RootLayout({
 
         {/* Contenu principal */}
         <main>{children}</main>
-        <Footer />
+        
+        {/* Ajout du footer */}
+        {renderFooter()}
       </body>
     </html>
   );
