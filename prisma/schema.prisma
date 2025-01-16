@@ -1,33 +1,47 @@
-generator client {
-  provider = "prisma-client-js"
-}
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String
+  password  String
+  createdAt DateTime @default(now())
 
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-}
-
-// Modèle Room
-model Room {
-  id        String    @id @default(uuid())
-  host      String
-  status    RoomStatus @default(WAITING)
   players   Player[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  rooms     Room[]   @relation("HostRooms")
 }
 
-// Modèle Player
+model Room {
+  id        String     @id @default(uuid())
+  hostId    String     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  status    RoomStatus @default(WAITING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  players   Player[]
+  host      User       @relation("HostRooms", fields: [hostId], references: [id])
+}
+
 model Player {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
   role      String
-  roomId    String
-  room      Room    @relation(fields: [roomId], references: [id])
+  roomId    String   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId    String   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isReady   Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  room      Room
+  user      User
 }
 
-// Enum RoomStatus
+model Card {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String
+  effect      Json
+  createdAt   DateTime @default(now())
+}
+
 enum RoomStatus {
   WAITING
   IN_PROGRESS

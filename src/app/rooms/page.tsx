@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+import { RoomEvent } from "@/types";
+import { connectToRoom, sendMessageToRoom, disconnectSocket } from "@/lib/socket";
 
 const CreateRoomPage = () => {
   const [host, setHost] = useState("");
@@ -8,6 +11,7 @@ const CreateRoomPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fonction pour créer une salle
   const createRoom = async () => {
     if (!host.trim()) {
       setError("Le nom de l'hôte est requis.");
@@ -30,6 +34,11 @@ const CreateRoomPage = () => {
 
       const data = await response.json();
       setRoom(data);
+
+      // Connecter au WebSocket après avoir créé la salle
+      connectToRoom(data.id, (data: RoomEvent) => {
+        console.log("Message reçu via WebSocket :", data);
+      });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -40,6 +49,22 @@ const CreateRoomPage = () => {
       setLoading(false);
     }
   };
+
+  // Fonction pour envoyer un message dans la salle
+  const sendMessage = () => {
+    if (room) {
+      sendMessageToRoom(room.id, `Message de l'hôte (${host})`);
+    } else {
+      setError("Aucune salle active. Créez une salle pour envoyer un message.");
+    }
+  };
+
+  // Déconnecter le WebSocket lorsqu'on quitte la page
+  useEffect(() => {
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-100 to-indigo-200 py-10">
@@ -80,6 +105,13 @@ const CreateRoomPage = () => {
           <div className="mt-6 bg-green-100 text-green-700 p-4 rounded-lg">
             <p className="font-bold">Salle créée avec succès !</p>
             <p>ID de la salle : <span className="font-mono">{room.id}</span></p>
+
+            <button
+              onClick={sendMessage}
+              className="mt-4 w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition"
+            >
+              Envoyer un message dans la salle
+            </button>
           </div>
         )}
       </div>

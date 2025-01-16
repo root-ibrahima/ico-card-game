@@ -1,6 +1,6 @@
 # ICO Card Game 🎮
 
-Un jeu de cartes interactif et stratégique inspiré des jeux de rôle comme Loup-Garou. Ce projet est développé avec Next.js, WebSocket, et d'autres technologies modernes pour offrir une expérience de jeu fluide et immersive.
+Un jeu de cartes interactif et stratégique inspiré des jeux de rôle comme Loup-Garou. Ce projet est développé avec Next.js, Prisma, WebSocket, et d'autres technologies modernes pour offrir une expérience de jeu fluide et immersive.
 
 ## 🚀 Fonctionnalités principales
 
@@ -11,7 +11,7 @@ Un jeu de cartes interactif et stratégique inspiré des jeux de rôle comme Lou
 - Système de rôles : Chaque joueur a un rôle unique tel que marin, pirate, ou sirène.
 - Temps réel : Utilisation des WebSockets pour permettre des mises à jour instantanées (nouveaux joueurs, mises à jour des rôles, etc.).
 - Interface utilisateur moderne : Conçue avec TailwindCSS et optimisée pour les écrans desktop et mobile.
-- Backend robuste : Gestion des salles, des joueurs et des états de jeu en temps réel.
+- Backend robuste : Gestion des salles, des joueurs et des états de jeu en temps réel via Prisma et Supabase.
 
 ## 📂 Structure du projet
 
@@ -21,17 +21,20 @@ ico-card-game/
 ├── src/
 │   ├── app/                # Pages principales (Next.js structure)
 │   │   ├── game/           # Pages liées au jeu
-│   │   ├── api/            # Routes API pour WebSocket et gestion des salles
+│   │   ├── api/            # Routes API pour la gestion des salles
 │   ├── components/         # Composants réutilisables (Navbar, GameBoard, etc.)
 │   ├── context/            # Contexte global pour la gestion du jeu
-│   ├── styles/             # Fichiers CSS et Tailwind
-│   ├── backend/            # Serveur WebSocket et logique backend
-│   └── utils/              # Utilitaires (Socket, constantes, helpers, etc.)
-├── README.md               # Documentation du projet
+│   ├── lib/                # Prisma client et outils WebSocket
+│   ├── services/           # Services pour gérer les interactions avec l'API
+│   └── utils/              # Fichiers utilitaires
+├── prisma/                 # Configuration Prisma
+│   ├── schema.prisma       # Modèles de base de données
+│   └── migrations/         # Fichiers de migration
+├── .env.local              # Variables d'environnement
 ├── package.json            # Dépendances et scripts NPM
 ├── tsconfig.json           # Configuration TypeScript
 ├── tailwind.config.js      # Configuration TailwindCSS
-└── next.config.js          # Configuration Next.js
+└── README.md               # Documentation du projet
 ```
 
 ## 📦 Installation
@@ -40,7 +43,7 @@ ico-card-game/
 
 - Node.js v18+
 - npm ou yarn
-- Une base de données (optionnel selon votre configuration).
+- Une base de données PostgreSQL (gérée ici avec Supabase).
 
 ### Étapes d'installation
 
@@ -61,9 +64,41 @@ yarn install
 
 Configurer les variables d'environnement : Créez un fichier `.env.local` à la racine du projet et ajoutez-y les clés nécessaires :
 
+```env
+# WebSocket URL
+NEXT_PUBLIC_WEBSOCKET_URL="ws://localhost:5000"
+
+# API URL
+NEXT_PUBLIC_API_URL="http://localhost:3000/api"
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL="https://shddkejukrddghgmddmb.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoZGRrZWp1a3JkZGdoZ21kZG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzczMTUsImV4cCI6MjA1MjM1MzMxNX0.iSuYjhzTSfYoPMw7Gggsudc_imNR22x-SOgRH8uVAK0"
+
+# Database (Prisma)
+DATABASE_URL="postgresql://postgres.shddkejukrddghgmddmb:Randorisec69*@aws-0-us-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.shddkejukrddghgmddmb:Randorisec69*@aws-0-us-west-1.pooler.supabase.com:5432/postgres"
+
+# NextAuth
+NEXTAUTH_SECRET="secret"
+```
+
+Configurer Prisma : Synchronisez les modèles Prisma avec la base de données :
+
 ```bash
-NEXT_PUBLIC_WEBSOCKET_URL=ws://localhost:5000
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+npx prisma migrate dev
+```
+
+Générer le client Prisma :
+
+```bash
+npx prisma generate
+```
+
+Vérifier le schéma Prisma :
+
+```bash
+npx prisma validate
 ```
 
 Démarrer le projet en mode développement :
@@ -104,39 +139,69 @@ npm run type-check
 
 Le backend est géré via un serveur WebSocket qui permet une communication en temps réel.
 
+### Prisma
+
+Gère les modèles de données et les interactions avec la base de données.
+
+### Routes API
+
+- `POST /api/rooms` : Créer une nouvelle salle.
+- `GET /api/rooms` : Récupérer toutes les salles.
+- `POST /api/rooms/join` : Rejoindre une salle existante.
+
 ### Serveur WebSocket
 
-Géré via `ws` pour créer des salles et gérer les joueurs en temps réel.
+Permet la gestion en temps réel des joueurs et des mises à jour des salles.
 
-### API Endpoints
+## 🧪 Tests WebSocket
 
-- `POST /api/rooms/create` : Créer une nouvelle salle.
-- `POST /api/rooms/join` : Rejoindre une salle existante.
-- `GET /api/rooms` : Liste des salles.
+Le projet inclut un serveur WebSocket pour gérer les salles et la communication en temps réel. Voici comment tester ces fonctionnalités.
 
-## 🛠️ Technologies utilisées
+![alt text](image.png)
 
-### Frontend
+1. Connexion au serveur WebSocket
+    Utilisez wscat pour vous connecter au serveur WebSocket :
 
-- Next.js : Framework React moderne.
-- TailwindCSS : Framework CSS pour une interface utilisateur stylée.
-- TypeScript : Typage statique pour des applications robustes.
+    ```bash
+    wscat -c ws://localhost:4000
+    ```
 
-### Backend
+2. Rejoindre une salle
+    Envoyez un message pour rejoindre une salle spécifique :
 
-- WebSocket : Gestion des communications en temps réel.
-- Express.js : API REST pour gérer les salles et les joueurs.
+    ```json
+    {"type": "JOIN_ROOM", "roomCode": "test-room"}
+    ```
 
-### Autres
+    Réponse attendue :
 
-- ESLint & Prettier : Pour maintenir un code propre et uniforme.
-- Heroicons : Icônes SVG modernes.
+    ```json
+    {"type":"ROOM_JOINED","message":"Vous avez rejoint la salle test-room"}
+    ```
 
-## 📚 Documentation
+3. Envoyer un message dans la salle
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [WebSocket Documentation](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
-- [TailwindCSS Documentation](https://tailwindcss.com/docs)
+    ```json
+    {"type": "SEND_MESSAGE", "roomCode": "test-room", "payload": {"content": "Bonjour à tous !"}}
+    ```
+
+    Réponse attendue :
+
+    ```json
+    {"type":"MESSAGE_RECEIVED","payload":{"content":"Bonjour à tous !"}}
+    ```
+
+4. Envoyer un message non valide
+
+    ```plaintext
+    kk
+    ```
+
+    Réponse attendue :
+
+    ```json
+    {"type":"ERROR","message":"Le message doit être un JSON valide."}
+    ```
 
 ## 🚀 Fonctionnalités futures
 
@@ -151,24 +216,24 @@ Les contributions sont les bienvenues ! Si vous avez une idée ou souhaitez corr
 
 ### Étapes pour contribuer
 
-1. Fork le dépôt.
+1. Forkez le dépôt.
 2. Créez une nouvelle branche :
 
     ```bash
-    git checkout -b ma-fonctionnalite
+    git checkout -b feature/ma-nouvelle-fonctionnalite
     ```
 
 3. Faites vos modifications.
 4. Commitez vos changements :
 
     ```bash
-    git commit -m "Ajout de ma fonctionnalité"
+    git commit -m "Ajout de ma nouvelle fonctionnalité"
     ```
 
 5. Poussez la branche :
 
     ```bash
-    git push origin ma-fonctionnalite
+    git push origin feature/ma-nouvelle-fonctionnalite
     ```
 
 6. Ouvrez une pull request.
@@ -179,7 +244,7 @@ Ce projet est sous licence MIT. Consultez le fichier LICENSE pour plus de détai
 
 ## 👨‍💻 Auteurs
 
-- [Ibrahima](https://github.com/ibrahima-eemi)
-- Sebastian OONISE
+- [Ibrahima DIALLO](https://github.com/ibrahima-eemi)
+- Sebastian ONISE
 - Damien DA SILVA
 - Alexandre MEME

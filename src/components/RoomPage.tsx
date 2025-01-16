@@ -1,59 +1,47 @@
-"use client";
+import { useEffect, useState } from "react";
+import { connectToRoom, sendMessage, disconnectSocket } from "@/lib/socket";
+import { RoomEvent } from "@/types/index";
 
-import React, { useEffect, useState } from "react";
-import { connectToRoom, disconnectSocket } from "@/lib/socket";
-import { Room, RoomEvent } from "@/types"; // Importez les types nécessaires.
+interface RoomProps {
+  roomCode: string;
+}
 
-const RoomPage: React.FC = () => {
-  const [room, setRoom] = useState<Room | null>(null);
-  const roomCode = window.location.pathname.split("/").pop() || "unknown";
-
-  const handleRoomUpdate = (data: RoomEvent) => {
-    if (data.type === "ROOM_UPDATE") {
-      setRoom(data.payload);
-    }
-  };
+const Room = ({ roomCode }: RoomProps) => {
+  const [messages, setMessages] = useState<RoomEvent[]>([]);
 
   useEffect(() => {
-    if (!roomCode) {
-      console.warn("Code de salle invalide");
-      return;
-    }
+    // Fonction appelée lorsqu'un message WebSocket est reçu
+    const handleMessage = (data: RoomEvent) => {
+      console.log("Message reçu :", data);
 
-    try {
-      connectToRoom(roomCode, handleRoomUpdate);
-    } catch (error) {
-      console.error("Erreur lors de la connexion à la salle :", error);
-    }
+      // Mise à jour des messages
+      setMessages((prevMessages) => [...prevMessages, data]);
+    };
 
-    // Déconnecter le socket lors du démontage
+    // Connexion au WebSocket
+    connectToRoom(roomCode, handleMessage);
+
+    // Déconnexion lors de la destruction du composant
     return () => {
       disconnectSocket();
     };
   }, [roomCode]);
 
-  if (!room) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <p className="text-lg text-gray-600 font-medium">Chargement de la salle...</p>
-      </div>
-    );
-  }
+  const handleSendMessage = () => {
+    const message = "Bonjour à tous !";
+    sendMessage(roomCode, message);
+  };
 
   return (
-    <div className="pt-16 min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-indigo-200 py-10">
-      <h1 className="text-4xl font-bold text-gray-800 mb-4">Salle : {roomCode}</h1>
-      <p className="text-lg text-gray-600 mb-8">Hôte : {room.host}</p>
-
-      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-blue-600 mb-4">Joueurs</h2>
+    <div>
+      <h1>Room : {roomCode}</h1>
+      <button onClick={handleSendMessage}>Envoyer un message</button>
+      <div>
+        <h2>Messages</h2>
         <ul>
-          {room.players.map((player, index) => (
-            <li
-              key={index}
-              className="text-gray-700 border-b last:border-none py-2"
-            >
-              {player.name} ({player.role})
+          {messages.map((msg, index) => (
+            <li key={index}>
+              <strong>{msg.type}</strong>: {JSON.stringify(msg.payload)}
             </li>
           ))}
         </ul>
@@ -62,4 +50,4 @@ const RoomPage: React.FC = () => {
   );
 };
 
-export default RoomPage;
+export default Room;

@@ -4,8 +4,8 @@ async function main() {
   // Ajouter une nouvelle salle
   const newRoom = await prisma.room.create({
     data: {
-      host: "Test Host", // Nom de l'hôte
-      status: "WAITING", // Statut de la salle
+      host: "Test Host", 
+      status: "WAITING",
     },
   });
   console.log("Nouvelle salle créée :", newRoom);

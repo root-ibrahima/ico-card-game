@@ -1,61 +1,67 @@
-// src/app/rooms/[roomCode]/page.tsx (App Router)
-"use client";
+import { RoomEvent } from "@/types/index";
 
-import React, { useEffect, useState } from "react";
-import { connectToRoom, sendMessage, disconnectSocket } from "@/lib/socket";
+const socket = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_URL || "");
 
-interface Player {
-  id: string;
-  name: string;
-  role: string;
-}
-
-interface Room {
-  host: string;
-  players: Player[];
-  status: "waiting" | "in-progress" | "finished";
-}
-
-const RoomPage: React.FC = () => {
-  const [room, setRoom] = useState<Room | null>(null);
-
-  useEffect(() => {
-    const roomCode = window.location.pathname.split("/").pop() || "unknown";
-
-    connectToRoom(roomCode, (data: any) => {
-      if (data.type === "ROOM_UPDATE") {
-        setRoom(data.payload);
-      }
-    });
-
-    return () => {
-      disconnectSocket();
-    };
-  }, []);
-
-  const handleStartGame = () => {
-    sendMessage(room?.host || "unknown", { action: "start-game" });
+/**
+ * Connecte l'utilisateur à une room spécifique et écoute les messages de cette room.
+ * @param roomCode - Code de la room à rejoindre.
+ * @param onMessage - Fonction de rappel appelée à chaque message reçu.
+ */
+export const connectToRoom = (roomCode: string, onMessage: (data: RoomEvent) => void) => {
+  socket.onopen = () => {
+    console.log(`WebSocket connecté pour la salle : ${roomCode}`);
+    socket.send(
+      JSON.stringify({
+        type: "JOIN_ROOM",
+        room: roomCode, // Changement pour correspondre au serveur
+      })
+    );
   };
 
-  if (!room) {
-    return <p>Chargement de la salle...</p>;
-  }
+  socket.onmessage = (event) => {
+    try {
+      const data: RoomEvent = JSON.parse(event.data);
+      console.log("Message reçu :", data);
+      onMessage(data);
+    } catch (error) {
+      console.error("Erreur lors de l'analyse du message WebSocket :", error);
+    }
+  };
 
-  return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold mb-4">Salle : {room.host}</h1>
-      <ul>
-        {room.players.map((player) => (
-          <li key={player.id}>
-            {player.name} - {player.role}
-          </li>
-        ))}
-      </ul>
-      <button onClick={handleStartGame} className="mt-4 bg-blue-500 text-white p-2 rounded">
-        Démarrer la partie
-      </button>
-    </div>
-  );
+  socket.onerror = (error) => {
+    console.error("Erreur WebSocket :", error);
+  };
+
+  socket.onclose = () => {
+    console.log("Connexion WebSocket fermée");
+  };
 };
 
-export default RoomPage;
+/**
+ * Envoie un message dans une room spécifique.
+ * @param roomCode - Code de la room cible.
+ * @param message - Contenu du message (texte ou objet).
+ */
+export const sendMessageToRoom = (roomCode: string, message: string | object) => {
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(
+      JSON.stringify({
+        type: "SEND_ROOM_MESSAGE", // Action pour envoyer un message dans une room
+        room: roomCode,
+        message,
+      })
+    );
+  } else {
+    console.error("WebSocket non connecté. Impossible d'envoyer le message.");
+  }
+};
+
+/**
+ * Déconnecte le socket WebSocket.
+ */
+export const disconnectSocket = () => {
+  if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+    console.log("Déconnexion du WebSocket...");
+    socket.close();
+  }
+};
