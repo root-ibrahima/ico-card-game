@@ -30,7 +30,7 @@ export type RoomEventType =
   | "PLAYER_LEFT"
   | "NEW_MESSAGE"
   | "GAME_START"
-  | "YOUR_ROLE"; // Ajout de YOUR_ROLE pour informer chaque joueur de son rôle
+  | "YOUR_ROLE";
 
 /**
  * Interface représentant un événement WebSocket.
