@@ -13,86 +13,103 @@ interface Player {
   avatar: string;
 }
 
-const EMOJIS = ["😃", "🎉", "🚀", "🔥", "💥", "🌟", "🤩", "🎮", "👾", "🦄"];
-
 const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
   const roomCode = params.roomCode;
   const [username, setUsername] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [newUsername, setNewUsername] = useState<string>("");
 
-  // Générer un username unique et le stocker dans localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedUsername = localStorage.getItem("username");
-      if (!storedUsername) {
-        const newUsername = `User-${Math.floor(Math.random() * 1000)}`;
-        localStorage.setItem("username", newUsername);
-        setUsername(newUsername);
-      } else {
-        setUsername(storedUsername);
-      }
-    }
-  }, []);
+  // Demande à l'utilisateur son pseudo avant d'entrer dans la salle
+  const handleJoinRoom = () => {
+    if (newUsername.trim() === "") return;
+    localStorage.setItem("username", newUsername);
+    setUsername(newUsername);
+  };
 
   useEffect(() => {
     if (!username) return; // Attendre que le username soit défini
 
-    const handleRoomEvent = (data: RoomEvent & { username?: string; players?: Player[] }) => {
+    const handleRoomEvent = (data: RoomEvent & { players?: Player[] }) => {
       console.log("🎮 Log reçu :", data);
 
       if (data.type === "ROOM_UPDATE" && data.players) {
-        // Met à jour la liste des joueurs déjà présents
-        setPlayers(
-          data.players.map((player) => ({
-            username: player.username,
-            avatar: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
-          }))
-        );
+        setPlayers(data.players);
       }
 
-      if (data.type === "PLAYER_JOINED" && data.username) {
-        setPlayers((prev) => {
-          const alreadyExists = prev.some((p) => p.username === data.username);
-          if (!alreadyExists) {
-            return [
-              ...prev,
-              {
-                username: data.username,
-                avatar: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
-              },
-            ];
-          }
-          return prev;
-        });
+      if (data.type === "PLAYER_JOINED" && data.players) {
+        setPlayers(data.players);
       }
     };
 
-    connectToRoom(roomCode, handleRoomEvent);
+    connectToRoom(roomCode, username, handleRoomEvent);
 
     return () => {
       disconnectSocket();
     };
   }, [roomCode, username]);
 
-  if (!username) return <p>Chargement...</p>;
+  // Écran de saisie du pseudo avant d'entrer dans la salle
+  if (!username) {
+    return (
+      <div className="min-h-screen bg-purple-500 flex flex-col items-center justify-center text-white p-4">
+        <h1 className="text-3xl font-bold mb-6">Entrez votre pseudo</h1>
+        <input
+          type="text"
+          value={newUsername}
+          onChange={(e) => setNewUsername(e.target.value)}
+          placeholder="Votre pseudo..."
+          className="w-80 px-4 py-2 rounded-lg text-black focus:outline-none"
+        />
+        <button
+          onClick={handleJoinRoom}
+          className="mt-4 bg-white text-purple-500 px-6 py-2 rounded-lg font-medium"
+        >
+          Rejoindre la partie
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <main className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-blue-500 to-indigo-600 text-white">
-      <h1 className="text-5xl font-extrabold mb-6">Salle : {roomCode}</h1>
-      <p className="text-lg text-gray-200">En attente des joueurs...</p>
+    <div className="min-h-screen bg-purple-500 flex flex-col items-center p-4 text-white">
+      {/* Header */}
+      <header className="w-full flex justify-between items-center mb-4">
+        <button className="text-white font-medium">Retour</button>
+        <h1 className="text-lg font-semibold">Lancement de la partie</h1>
+        <div className="w-8 h-8"></div>
+      </header>
 
-      <div className="flex flex-wrap justify-center mt-10 space-x-6">
+      {/* QR Code Section */}
+      <section className="flex flex-col items-center">
+        <div className="w-24 h-24 bg-white rounded-md flex items-center justify-center mb-4">
+          <span className="text-purple-500 text-4xl">QR</span>
+        </div>
+        <p className="text-center text-sm mb-6">
+          Les autres joueurs peuvent scanner ce QR code pour rejoindre cette partie !
+        </p>
+      </section>
+
+      {/* Players Section */}
+      <section className="grid grid-cols-4 gap-4 w-full mb-6">
         {players.map((player, index) => (
           <div
             key={index}
-            className="flex flex-col items-center bg-white text-black px-4 py-2 rounded-lg shadow-lg transform transition-all duration-500 scale-100 hover:scale-110"
+            className="w-full h-16 bg-gray-300 rounded-lg flex flex-col items-center justify-center p-2"
           >
-            <p className="text-6xl">{player.avatar}</p>
-            <p className="text-lg font-semibold mt-2">{player.username}</p>
+            <img src={player.avatar} alt={player.username} className="w-10 h-10 rounded-full" />
+            <p className="text-xs mt-1">{player.username}</p>
           </div>
         ))}
-      </div>
-    </main>
+        <div className="w-full h-16 bg-purple-700 rounded-lg flex items-center justify-center">
+          ...
+        </div>
+      </section>
+
+      {/* Start Button */}
+      <button className="w-full bg-white text-purple-500 py-3 rounded-lg font-medium">
+        Commencer la partie
+      </button>
+    </div>
   );
 };
 
