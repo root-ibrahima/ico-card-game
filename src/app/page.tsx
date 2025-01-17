@@ -99,8 +99,8 @@ const Home: React.FC = () => {
       <div className="mt-6 pb-4"> {/* Ajout de pb-4 */}
       <h3 className="text-lg font-semibold">Règles du jeu</h3>
       <p className="text-sm mt-2">
-        ICO est un jeu de société numérique où pirates, marins et sirènes s'affrontent pour le contrôle d'un trésor en mer. 
-        Chaque équipe a un objectif différent : les pirates doivent gagner la confiance des marins et empoisonner l'équipage, tandis que les marins et la sirène doivent identifier les pirates et protéger le trésor.
+        ICO est un jeu de société numérique où pirates, marins et sirènes s&apos;affrontent pour le contrôle d&apos;un trésor en mer. 
+        Chaque équipe a un objectif différent : les pirates doivent gagner la confiance des marins et empoisonner l&apos;équipage, tandis que les marins et la sirène doivent identifier les pirates et protéger le trésor.
       </p>
       <button className="w-full bg-[#3B60BC] text-white py-2 rounded-lg mt-4">En savoir plus</button> {/* Correction de la couleur bg-[#3B60BC] */}
     </div>
