@@ -1,90 +1,62 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import GameBoard from "@/components/GameBoard";
+import Image from 'next/image';
+import Link from 'next/link';
 
-interface Player {
-  id: string;
-  name: string;
-  role: "marin" | "pirate" | "sirène";
-  isCaptain: boolean;
-}
-
-const GameModesPage: React.FC = () => {
-  const [currentMode, setCurrentMode] = useState<"modes" | "game">("modes"); // Contrôle de la vue
-  const router = useRouter();
-
-  const players: Player[] = [
-    { id: "1", name: "Alice", role: "marin", isCaptain: false },
-    { id: "2", name: "Bob", role: "pirate", isCaptain: false },
-    { id: "3", name: "Charlie", role: "sirène", isCaptain: false },
-  ];
-
-  const handleModeSelection = (mode: string) => {
-    if (mode === "multiplayer" || mode === "custom") {
-      // Redirection vers une page spécifique si besoin
-      router.push(`/game/modes/${mode}`);
-    } else {
-      setCurrentMode("game"); // Afficher la liste des joueurs
-    }
-  };
+const RoleDistribution = () => {
+  const role = 'pirate'; // Exemple : rôle actuel, à remplacer par des données dynamiques
+  const description =
+    "Votre mission est de semer la confusion parmi les marins et de les empoisonner !";
 
   return (
-    <div className="pt-16 min-h-screen flex flex-col items-center bg-gradient-to-b from-blue-100 to-indigo-200 py-10">
-      {currentMode === "modes" ? (
-        <>
-          {/* Vue des Modes */}
-          <h1 className="text-4xl font-bold text-gray-800 mb-8">Choisissez un Mode de Jeu 🎮</h1>
+    <div className="min-h-screen flex flex-col justify-between bg-gray-100">
+      {/* Header */}
+      <header className="flex justify-between items-center p-4">
+        {/* Bouton quitter la partie */}
+        <Link href="/">
+          <button className="text-gray-700 hover:text-gray-900 text-sm font-semibold">
+            Quitter la partie
+          </button>
+        </Link>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
-            {/* Mode Multijoueur */}
-            <div
-              className="bg-white shadow-lg rounded-lg p-6 cursor-pointer hover:bg-gray-100 transition transform hover:-translate-y-1"
-              onClick={() => handleModeSelection("multiplayer")}
-            >
-              <h2 className="text-2xl font-bold text-green-600 mb-4">Mode Multijoueur</h2>
-              <p className="text-gray-700">
-                Rejoignez des amis ou des joueurs aléatoires pour une partie en ligne.
-              </p>
-            </div>
+        {/* Photo de profil */}
+        <div className="w-10 h-10 rounded-full overflow-hidden">
+          <Image
+            src="" // Remplacez par le chemin réel de votre photo
+            alt="Photo de profil"
+            width={40}
+            height={40}
+          />
+        </div>
+      </header>
 
-            {/* Mode Personnalisé */}
-            <div
-              className="bg-white shadow-lg rounded-lg p-6 cursor-pointer hover:bg-gray-100 transition transform hover:-translate-y-1"
-              onClick={() => handleModeSelection("custom")}
-            >
-              <h2 className="text-2xl font-bold text-purple-600 mb-4">Mode Personnalisé</h2>
-              <p className="text-gray-700">
-                Configurez vos propres règles et invitez des joueurs spécifiques.
-              </p>
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* Vue du Tableau des Joueurs */}
-          <h1 className="text-4xl font-extrabold text-gray-800 mb-8 tracking-tight">
-            Tableau des Joueurs 🎮
-          </h1>
+      {/* Contenu principal */}
+      <main className="flex-grow flex flex-col items-center justify-center text-center px-4">
+        {/* Image du rôle */}
+        <div className="w-48 h-48 mb-8">
+          <Image
+            src={`/cartes/bonus/Carte-${card}.png`} alt={card} // Image basée sur le rôle
+            alt={role}
+            width={192}
+            height={192}
+            className="rounded-lg object-cover"
+          />
+        </div>
 
-          <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-6">
-            <GameBoard players={players} />
-          </div>
+        {/* Titre et description */}
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">
+          Votre rôle : {role.charAt(0).toUpperCase() + role.slice(1)}
+        </h2>
+        <p className="text-lg text-gray-600 mb-8">{description}</p>
 
-          {/* Bouton Retour */}
-          <div className="mt-10">
-            <button
-              onClick={() => setCurrentMode("modes")}
-              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow hover:bg-blue-700 transition duration-300"
-            >
-              Retour aux Modes
-            </button>
-          </div>
-        </>
-      )}
+        {/* Indication */}
+        <p className="text-base text-gray-500">
+          Les autres joueurs ont également reçu leurs rôles.
+        </p>
+      </main>
+
     </div>
   );
 };
 
-export default GameModesPage;
+export default RoleDistribution;
