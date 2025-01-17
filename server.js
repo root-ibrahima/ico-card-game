@@ -124,7 +124,7 @@ function assignRoles(roomCode) {
         })
       );
     }
-  });
+  });  
 }
 
 function broadcast(roomCode, message) {
