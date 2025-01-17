@@ -1,0 +1,17 @@
+/* src/app/fonts.css */
+
+@font-face {
+    font-family: 'Caloops';
+    src: url('/font/Caloops.ttf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  @font-face {
+    font-family: 'Filson';
+    src: url('/font/Filson.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }

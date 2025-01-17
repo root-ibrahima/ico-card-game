@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss'
 
 export default {
   darkMode: "class", // Permet de basculer entre les thèmes clair/sombre
@@ -20,7 +20,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "Arial", "Helvetica", "sans-serif"],
+        caloops: ['Caloops', 'Arial', 'sans-serif'],
+        filson: ['Filson', 'Arial', 'sans-serif'],
       },
       animation: {
         fadeIn: "fadeIn 1s ease-in-out",

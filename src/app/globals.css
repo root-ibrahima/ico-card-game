@@ -14,7 +14,11 @@
   }
 }
 
-body {
+body h2 h3 h4 h5 h6 {
   @apply bg-background-light text-foreground-light dark:bg-background-dark dark:text-foreground-dark transition-colors duration-500;
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-family: 'Filson', Arial, Helvetica, sans-serif;
+}
+
+h1 {
+  font-family: 'Caloops', Arial, Helvetica, sans-serif;
 }

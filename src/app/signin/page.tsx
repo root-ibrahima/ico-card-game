@@ -58,7 +58,7 @@ export default function SignInPage() {
         {/* White box */}
         <div className="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
           {/* Welcome Text */}
-          <h2 className="text-lg font-semibold text-center mb-4">
+          <h2 className="text-lg text-center mb-4 font-bold">
             Connectez-vous !
           </h2>
           <h4 className="text-sm text-center text-gray-500 mb-3">
