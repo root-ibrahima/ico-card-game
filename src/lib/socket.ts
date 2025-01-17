@@ -1,56 +1,70 @@
 import { RoomEvent } from "@/types/index";
 
-// Déclare une variable socket pour une meilleure gestion du cycle de vie
 let socket: WebSocket | null = null;
 
 /**
- * Connecte l'utilisateur à une room spécifique et écoute les messages de cette room.
- * @param roomCode - Code de la room à rejoindre.
- * @param onMessage - Fonction de callback appelée à chaque message reçu.
+ * Connecte un utilisateur à une room spécifique et écoute les messages WebSocket.
  */
-export const connectToRoom = (roomCode: string, onMessage: (data: RoomEvent) => void) => {
-  if (!process.env.NEXT_PUBLIC_WEBSOCKET_URL) {
-    console.error("WebSocket URL non défini dans les variables d'environnement.");
+export const connectToRoom = (
+  roomCode: string,
+  username: string,
+  onMessage: (data: RoomEvent & { players?: { username: string; avatar: string }[] }) => void
+) => {
+  const WS_URL = "ws://localhost:5000"; // ✅ Port mis à jour
+
+  if (!WS_URL) {
+    console.error("❌ WebSocket URL non définie.");
     return;
   }
 
-  socket = new WebSocket(process.env.NEXT_PUBLIC_WEBSOCKET_URL);
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    console.log("⚠️ WebSocket déjà connecté !");
+    return;
+  }
+
+  socket = new WebSocket(WS_URL);
 
   socket.onopen = () => {
-    console.log(`WebSocket connecté pour la salle : ${roomCode}`);
+    console.log(`✅ WebSocket connecté pour la salle : ${roomCode}`);
+
+    const avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`;
+
     socket?.send(
       JSON.stringify({
         type: "JOIN_ROOM",
         room: roomCode,
+        username,
+        avatar,
       })
     );
   };
 
   socket.onmessage = (event) => {
     try {
-      const data: RoomEvent = JSON.parse(event.data);
-      console.log("Message reçu :", data);
+      const data: RoomEvent & { players?: { username: string; avatar: string }[] } = JSON.parse(event.data);
+      console.log("📩 Message reçu du serveur :", data);
       onMessage(data);
     } catch (error) {
-      console.error("Erreur lors de l'analyse du message WebSocket :", error);
+      console.error("❌ Erreur WebSocket :", error);
     }
   };
 
   socket.onerror = (error) => {
-    console.error("Erreur WebSocket :", error);
+    console.error("⚠️ Erreur WebSocket :", error);
   };
 
   socket.onclose = () => {
-    console.log("Connexion WebSocket fermée");
+    console.log("🛑 Connexion WebSocket fermée");
+    socket = null;
   };
 };
 
 /**
- * Déconnecte le socket WebSocket.
+ * Déconnecte le WebSocket proprement.
  */
 export const disconnectSocket = () => {
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-    console.log("Déconnexion du WebSocket...");
+    console.log("🔌 Déconnexion du WebSocket...");
     socket.close();
     socket = null;
   }
