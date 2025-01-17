@@ -1,5 +1,3 @@
-// src/types/index.ts
-
 /**
  * Interface représentant un joueur.
  */
@@ -9,6 +7,7 @@ export interface Player {
   role: "marin" | "pirate" | "sirene" | "captain"; // Ajout des rôles de jeu
   avatar: string; // Ajout pour la gestion des avatars
   isCaptain: boolean; // Détermine si le joueur est le narrateur
+  roomCode: string; // Permet d'identifier dans quelle room est le joueur
 }
 
 /**
@@ -19,7 +18,6 @@ export interface Room {
   players: Player[];
   status: "waiting" | "in-progress" | "finished";
 }
-
 
 /**
  * Événements possibles dans le WebSocket.

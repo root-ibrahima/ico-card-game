@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 
-const port = 4000;
+const port = 5000;
 const wss = new WebSocketServer({ port });
 
 console.log(`WebSocketServer démarré sur ws://localhost:${port}`);

@@ -1,4 +1,5 @@
 const { WebSocketServer } = require("ws");
+const crypto = require("crypto");
 
 const port = 5000;
 const wss = new WebSocketServer({ port });
@@ -12,33 +13,57 @@ wss.on("connection", (ws) => {
   ws.on("message", (message) => {
     try {
       const data = JSON.parse(message);
+      console.log("📩 Message reçu du client :", data);
 
-      if (data.type === "JOIN_ROOM") {
-        const roomCode = data.room;
-        const username = data.username;
-        const avatar = data.avatar;
+      let { type, roomCode, username, avatar, createNewRoom } = data;
+
+      if (!username) {
+        console.error("❌ Erreur : username est undefined !");
+        return;
+      }
+
+      if (!avatar) {
+        console.warn("⚠️ Aucun avatar fourni, génération automatique...");
+        avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`;
+      }
+
+      if (type === "JOIN_ROOM") {
+        if (createNewRoom) {
+          // ✅ FORCER LA CRÉATION D'UNE NOUVELLE ROOM SI DEMANDÉ
+          roomCode = generateRoomCode();
+          console.log(`🆕 Nouvelle salle créée : ${roomCode}`);
+        } else {
+          // ✅ SINON, UTILISER UNE ROOM EXISTANTE OU EN CRÉER UNE NOUVELLE SI AUCUNE N'EXISTE
+          roomCode = roomCode || findExistingRoom() || generateRoomCode();
+          console.log(`🔄 Salle attribuée à ${username} : ${roomCode}`);
+        }
 
         if (!rooms[roomCode]) {
           rooms[roomCode] = [];
         }
 
-        rooms[roomCode].push({ ws, username, avatar, role: null, isCaptain: false });
+        // Vérifier si le joueur est déjà présent dans la salle
+        const playerIndex = rooms[roomCode].findIndex((p) => p.username === username);
+
+        if (playerIndex === -1) {
+          // Ajouter le joueur SEULEMENT s'il n'est pas déjà dans la salle
+          rooms[roomCode].push({ ws, username, avatar, role: null, isCaptain: false });
+        } else {
+          console.log(`⚠️ ${username} est déjà dans la salle ${roomCode}, pas de duplication.`);
+        }
 
         console.log(`👥 ${username} a rejoint la salle ${roomCode}`);
 
+        // Liste des joueurs pour l'affichage côté client
         const playersList = rooms[roomCode].map((p) => ({
           username: p.username,
           avatar: p.avatar,
         }));
 
-        // Envoyer la mise à jour à tous les joueurs sans leur rôle
-        rooms[roomCode].forEach((client) => {
-          if (client.ws.readyState === ws.OPEN) {
-            client.ws.send(JSON.stringify({ type: "ROOM_UPDATE", players: playersList }));
-          }
-        });
+        // Envoyer la mise à jour de la salle
+        broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
 
-        // Vérifier si nous avons 7 joueurs, et assigner les rôles
+        // Assigner les rôles si la salle atteint 7 joueurs
         if (rooms[roomCode].length === 7) {
           assignRoles(roomCode);
         }
@@ -50,11 +75,31 @@ wss.on("connection", (ws) => {
 
   ws.on("close", () => {
     console.log("🔴 Client déconnecté");
+    cleanRooms();
   });
 });
 
 /**
- * Fonction pour assigner les rôles une fois que 7 joueurs sont dans la salle.
+ * 🔥 Génère un code de room aléatoire (ex: "XQ1P6R").
+ */
+function generateRoomCode() {
+  return crypto.randomBytes(3).toString("hex").toUpperCase();
+}
+
+/**
+ * 🔎 Recherche une salle existante qui n'a pas encore 7 joueurs.
+ */
+function findExistingRoom() {
+  for (const roomCode in rooms) {
+    if (rooms[roomCode].length < 7) {
+      return roomCode;
+    }
+  }
+  return null;
+}
+
+/**
+ * 🎭 Assigne les rôles une fois que 7 joueurs sont dans la salle.
  */
 function assignRoles(roomCode) {
   if (!rooms[roomCode] || rooms[roomCode].length !== 7) return;
@@ -62,14 +107,13 @@ function assignRoles(roomCode) {
   const roles = ["Marin", "Marin", "Marin", "Pirate", "Pirate", "Pirate", "Sirène"];
   const shuffledRoles = roles.sort(() => Math.random() - 0.5);
 
-  // Assigner les rôles aléatoirement
   rooms[roomCode].forEach((player, index) => {
     player.role = shuffledRoles[index];
   });
 
-  // Sélectionner aléatoirement un Capitaine parmi les 7 joueurs (il garde son rôle)
+  // Sélectionner un capitaine au hasard
   const randomCaptainIndex = Math.floor(Math.random() * 7);
-  rooms[roomCode][randomCaptainIndex].isCaptain = true; // ✅ Maintenant, il garde son rôle principal
+  rooms[roomCode][randomCaptainIndex].isCaptain = true;
 
   console.log(`🎭 Rôles assignés dans la salle ${roomCode}:`);
   rooms[roomCode].forEach((player) => {
@@ -77,18 +121,9 @@ function assignRoles(roomCode) {
   });
 
   // Envoyer uniquement la liste des joueurs aux autres joueurs (sans rôle)
-  rooms[roomCode].forEach((client) => {
-    if (client.ws.readyState === client.ws.OPEN) {
-      client.ws.send(
-        JSON.stringify({
-          type: "GAME_START",
-          players: rooms[roomCode].map(({ username, avatar }) => ({
-            username,
-            avatar,
-          })),
-        })
-      );
-    }
+  broadcast(roomCode, {
+    type: "GAME_START",
+    players: rooms[roomCode].map(({ username, avatar }) => ({ username, avatar })),
   });
 
   // Envoyer à chaque joueur son propre rôle
@@ -101,6 +136,30 @@ function assignRoles(roomCode) {
           isCaptain: player.isCaptain,
         })
       );
+    }
+  });
+}
+
+/**
+ * 📡 Envoie un message à tous les joueurs d'une salle.
+ */
+function broadcast(roomCode, message) {
+  if (!rooms[roomCode]) return;
+  rooms[roomCode].forEach(({ ws }) => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  });
+}
+
+/**
+ * 🧹 Nettoie les rooms des joueurs déconnectés.
+ */
+function cleanRooms() {
+  Object.keys(rooms).forEach((roomCode) => {
+    rooms[roomCode] = rooms[roomCode].filter((player) => player.ws.readyState === WebSocket.OPEN);
+    if (rooms[roomCode].length === 0) {
+      delete rooms[roomCode];
     }
   });
 }
