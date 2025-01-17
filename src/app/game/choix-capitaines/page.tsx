@@ -5,7 +5,7 @@ import HeaderGame from "../components/HeaderGame";
 import FooterGame from "../components/FooterGame";
 
 const CaptainChoicePage = () => {
-  const [isCaptain, setIsCaptain] = useState(false); // Remplacez par une logique réelle
+  const [isCaptain, setIsCaptain] = useState(true); // Remplacez par une logique réelle
   const captainName = isCaptain ? "Vous" : "Maxime"; // Statique pour l'instant
   const captainImage = "/profile.png"; // Remplacez par l'image réelle du capitaine
 

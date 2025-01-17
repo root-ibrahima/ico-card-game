@@ -14,33 +14,6 @@ const roleDescriptions: { [key: string]: string } = {
 };
 
 const RoleDistribution = () => {
-  const [role, setRole] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    // Récupérer le rôle du joueur
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole) {
-      setRole(storedRole);
-    } else {
-      console.error("⚠️ Aucun rôle trouvé !");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (role === "captain") {
-      console.log("🧭 Redirection vers le mode Capitaine...");
-      router.push("/game/captain-dashboard"); // Redirection spéciale pour le Capitaine
-    }
-  }, [role, router]);
-
-  if (!role) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-xl font-bold">Chargement du rôle...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
