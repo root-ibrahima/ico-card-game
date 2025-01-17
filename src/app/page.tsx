@@ -26,14 +26,13 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-white rounded-lg shadow-md p-5">
-      <h2 className="text-2xl font-semibold mb-4">
-        Bon retour, <span className="text-purple-600">James</span> !
-      </h2>
+    <div className="w-full max-w-sm mx-auto bg-white rounded-lg shadow-md p-5 mb-20 overflow-y-auto"> {/* Ajout de mb-20 et overflow-y-auto */}
+      <h1 className="text-2xl font-semibold mb-4">
+        Bon retour, <span className=" text-[#3B60BC]">James</span> !
+      </h1>
       
       {/* Boutons de jeu */}
 
-        {/* Champ d'entrée pour entrer un code */}
         {/* Champ d'entrée pour entrer un code */}
         <input 
           type="text"
@@ -45,7 +44,7 @@ const Home: React.FC = () => {
         
       <div className="space-y-4">
         <button 
-          className="w-full bg-purple-500 text-white py-3 rounded-lg text-left px-4"
+          className="w-full bg-[#3B60BC] text-white py-3 rounded-lg text-left px-4"
           onClick={handleCreateGame} // Lien avec la fonction de création
         >
           <span className="font-bold">Démarrer une partie</span>
@@ -53,7 +52,7 @@ const Home: React.FC = () => {
         </button>
 
         <button 
-          className="w-full bg-purple-900 text-white py-3 rounded-lg text-left px-4"
+          className="w-full bg-[#EF4B4B] text-white py-3 rounded-lg text-left px-4"
           onClick={handleJoinGame} // Lien avec la fonction de connexion
         >
           <span className="font-bold">Rejoindre une partie</span>
@@ -97,15 +96,16 @@ const Home: React.FC = () => {
       </div>
 
       {/* Règles du jeu */}
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold">Règles du jeu</h3>
-        <p className="text-sm mt-2">
-          ICO est un jeu de société numérique où pirates, marins et sirènes s&apos;affrontent pour le contrôle d’un trésor en mer.
-        </p>
-        <button className="w-full bg-purple-500 text-white py-2 rounded-lg mt-4">En savoir plus</button>
-      </div>
+      <div className="mt-6 pb-4"> {/* Ajout de pb-4 */}
+      <h3 className="text-lg font-semibold">Règles du jeu</h3>
+      <p className="text-sm mt-2">
+        ICO est un jeu de société numérique où pirates, marins et sirènes s'affrontent pour le contrôle d'un trésor en mer. 
+        Chaque équipe a un objectif différent : les pirates doivent gagner la confiance des marins et empoisonner l'équipage, tandis que les marins et la sirène doivent identifier les pirates et protéger le trésor.
+      </p>
+      <button className="w-full bg-[#3B60BC] text-white py-2 rounded-lg mt-4">En savoir plus</button> {/* Correction de la couleur bg-[#3B60BC] */}
     </div>
-  );
+  </div>
+);
 };
 
 export default Home;
