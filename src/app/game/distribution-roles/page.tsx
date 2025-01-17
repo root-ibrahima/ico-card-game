@@ -5,6 +5,7 @@ import HeaderGame from "../components/HeaderGame";
 import RoleCard from "./RoleCard";
 
 const RoleDistribution = () => {
+  
   const role = "pirate"; // Exemple statique
   const description =
     "Votre mission est de semer la confusion parmi les marins et de les empoisonner !";

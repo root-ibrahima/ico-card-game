@@ -9,7 +9,7 @@ interface FooterGameProps {
 
 const FooterGame: React.FC<FooterGameProps> = ({
     //a lier au BO 
-  role = 'pirate',
+  role = 'marin',
   piratePoints = 0,
   marinPoints = 0,
   mancheGagnees = 0,
