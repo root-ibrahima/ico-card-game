@@ -10,15 +10,10 @@ export const connectToRoom = (
   username: string,
   onMessage: (data: RoomEvent & { players?: { username: string; avatar: string }[] }) => void
 ) => {
-  const WS_URL = "ws://localhost:5000"; // ✅ Port mis à jour
-
-  if (!WS_URL) {
-    console.error("❌ WebSocket URL non définie.");
-    return;
-  }
+  const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:5000"; // ✅ Rendu configurable
 
   if (socket && socket.readyState === WebSocket.OPEN) {
-    console.log("⚠️ WebSocket déjà connecté !");
+    console.warn("⚠️ WebSocket déjà connecté !");
     return;
   }
 
@@ -45,12 +40,12 @@ export const connectToRoom = (
       console.log("📩 Message reçu du serveur :", data);
       onMessage(data);
     } catch (error) {
-      console.error("❌ Erreur WebSocket :", error);
+      console.error("❌ Erreur lors du traitement du message WebSocket :", error);
     }
   };
 
-  socket.onerror = (error) => {
-    console.error("⚠️ Erreur WebSocket :", error);
+  socket.onerror = (event) => {
+    console.error("⚠️ Erreur WebSocket :", event);
   };
 
   socket.onclose = () => {
@@ -60,7 +55,24 @@ export const connectToRoom = (
 };
 
 /**
- * Déconnecte le WebSocket proprement.
+ * Envoie un message dans la room via WebSocket.
+ */
+export const sendMessageToRoom = (roomCode: string, message: string) => {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(
+      JSON.stringify({
+        type: "NEW_MESSAGE",
+        room: roomCode,
+        message,
+      })
+    );
+  } else {
+    console.error("❌ WebSocket non connecté, impossible d'envoyer le message.");
+  }
+};
+
+/**
+ * Déconnecte proprement le WebSocket.
  */
 export const disconnectSocket = () => {
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
