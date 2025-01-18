@@ -5,8 +5,6 @@ export async function GET(request: NextRequest) {
     try {
         const token = request.cookies.get("access_token")?.value;
 
-        console.log("Debug: Token received in /api/auth/user:", token);
-
         if (!token) {
             return NextResponse.json({ error: "Token is missing" }, { status: 401 });
         }

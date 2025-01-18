@@ -1,40 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import { connectToRoom, disconnectSocket } from "@/lib/socket";
 import HeaderGame from "../components/HeaderGame";
 import FooterGame from "../components/FooterGame";
 import PlayerCard from "./PlayerCard";
 
 const SelectCrewPage = () => {
+  const [players, setPlayers] = useState<{ id: string; name: string; avatar: string }[]>([]);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  // Liste des joueurs (statique pour l'instant, augmentée pour tester le scroll)
-  const players = [
-    { id: "1", name: "James", image: "/players/james.png" },
-    { id: "2", name: "Ibrahima", image: "/players/ibrahima.png" },
-    { id: "3", name: "Damien", image: "/players/damien.png" },
-    { id: "4", name: "Alexandre", image: "/players/alexandre.png" },
-    { id: "5", name: "Sebastian", image: "/players/sebastian.png" },
-    { id: "6", name: "Valentin", image: "/players/valentin.png" },
-    { id: "7", name: "Massessilia", image: "/players/massessilia.png" },
-    { id: "8", name: "Léa", image: "/players/lea.png" },
-    { id: "9", name: "Thomas", image: "/players/thomas.png" },
-    { id: "10", name: "Sarah", image: "/players/sarah.png" },
-    { id: "11", name: "Emma", image: "/players/emma.png" },
-    { id: "12", name: "Lucas", image: "/players/lucas.png" },
-  ];
+  useEffect(() => {
+    // Récupérer la roomCode depuis l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get("room");
+
+    const username = localStorage.getItem("username"); // Récupérer le pseudo stocké
+
+    if (!roomCode || !username) {
+      console.error("❌ RoomCode ou Username manquant !");
+      return;
+    }
+
+    // Connexion à la WebSocket
+    connectToRoom(roomCode, username, (data) => {
+      if (data.type === "ROOM_UPDATE" && data.players) {
+        setPlayers(data.players.map((player: { id?: string; username: string; name?: string; avatar: string }) => ({
+          id: player.id || player.username, // Assuming 'id' can be 'username' if 'id' is not present
+          name: player.name || player.username, // Assuming 'name' can be 'username' if 'name' is not present
+          avatar: player.avatar
+        })));
+      }
+    });
+
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
 
   const toggleSelection = (playerId: string) => {
     if (selectedPlayers.includes(playerId)) {
-      // Supprime si déjà sélectionné
       setSelectedPlayers((prev) => prev.filter((id) => id !== playerId));
     } else if (selectedPlayers.length < 3) {
-      // Ajoute si non sélectionné et limite à 3
       setSelectedPlayers((prev) => [...prev, playerId]);
-      setAlertMessage(null); // Réinitialise l'alerte si valide
+      setAlertMessage(null);
     } else {
-      // Affiche une alerte si on dépasse la limite
       setAlertMessage("Vous ne pouvez sélectionner que 3 membres maximum !");
     }
   };
@@ -50,7 +61,7 @@ const SelectCrewPage = () => {
           Sélectionnez votre équipage
         </h1>
         <p className="text-base text-gray-600 text-center mb-6">
-          Choisissez jusqu'à 3 membres pour votre équipage.
+          Choisissez jusqu&apos;à 3 membres pour votre équipage.
         </p>
 
         {/* Alerte */}
@@ -90,7 +101,7 @@ const SelectCrewPage = () => {
               alert("Équipage sélectionné : " + selectedPlayers.join(", "))
             }
           >
-            Valider l'équipage
+            Valider l&apos;équipage
           </button>
         </div>
       </main>
