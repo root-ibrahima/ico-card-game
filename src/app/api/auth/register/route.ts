@@ -1,20 +1,40 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabaseClient";
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const { email, password }: { email: string; password: string } =
+      await request.json();
 
-    // Inscrire un nouvel utilisateur via Supabase
-    const { data, error } = await supabase.auth.signUp({ email, password });
-
-    if (error) {
-      return NextResponse.json({ message: error.message }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ message: 'Utilisateur créé avec succès', user: data.user }, { status: 201 });
+    const { data, error } = await supabase.auth.signUp({ email, password });
+
+    if (error || !data.user) {
+      console.error("API /auth/register: Supabase signup error", error);
+      return NextResponse.json(
+        { error: error?.message || "Registration failed" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        message: "User registered successfully",
+        user: { id: data.user.id, email: data.user.email },
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Erreur lors de la création de l\'utilisateur:', error);
-    return NextResponse.json({ message: 'Erreur interne du serveur' }, { status: 500 });
+    console.error("API /auth/register: Internal server error", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

@@ -37,7 +37,7 @@ export default function RegisterPage() {
             });
 
             if (res.ok) {
-                router.push('/auth/signin');
+                router.push('/signin');
             } else {
                 const errorData = await res.json();
                 setError(errorData.message || "Erreur lors de l'inscription. Veuillez réessayer.");
