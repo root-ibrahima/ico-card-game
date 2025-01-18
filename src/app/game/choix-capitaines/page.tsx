@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import HeaderGame from "../components/HeaderGame";
-import FooterGame from "../components/FooterGame";
+import HeaderGame from "../rooms/[roomcode]/components/HeaderGame";
+import FooterGame from "../rooms/[roomcode]/components/FooterGame";
 
 const CaptainChoicePage = () => {
   const [isCaptain, setIsCaptain] = useState(true); // Remplacez par une logique réelle

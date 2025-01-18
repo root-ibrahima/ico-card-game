@@ -15,53 +15,48 @@ wss.on("connection", (ws) => {
       const data = JSON.parse(message);
       console.log("📩 Message reçu du client :", data);
 
-      let { type, roomCode, username, avatar, createNewRoom } = data;
+      const { type, roomCode, username, avatar, currentUrl, createNewRoom } = data;
+
+      if (type === "UPDATE_URL") {
+        // Met à jour l'URL du client
+        ws.urlPath = currentUrl;
+        console.log(`🔄 URL mise à jour : ${ws.urlPath}`);
+        return;
+      }
 
       if (!username) {
         console.error("❌ Erreur : username est undefined !");
         return;
       }
 
-      if (!avatar) {
-        console.warn("⚠️ Aucun avatar fourni, génération automatique...");
-        avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`;
-      }
+      let finalRoomCode = roomCode;
 
       if (type === "JOIN_ROOM") {
-        if (roomCode) {
-          console.log(`🔗 Code de salle reçu de l'URL : ${roomCode}`);
-          if (!rooms[roomCode]) {
-            console.log(`📌 Création de la salle ${roomCode}...`);
-            rooms[roomCode] = [];
-          }
-        } else if (createNewRoom) {
-          roomCode = generateRoomCode();
-          console.log(`🆕 Nouvelle salle forcée : ${roomCode}`);
-          rooms[roomCode] = [];
-        } else {
-          roomCode = findExistingRoom() || generateRoomCode();
-          console.log(`🔄 Salle trouvée/attribuée à ${username} : ${roomCode}`);
-          if (!rooms[roomCode]) {
-            rooms[roomCode] = [];
-          }
+        if (!finalRoomCode) {
+          finalRoomCode = createNewRoom ? generateRoomCode() : findExistingRoom() || generateRoomCode();
         }
 
-        if (!rooms[roomCode]) {
-          console.error(`❌ Erreur : La salle ${roomCode} n'a pas pu être créée.`);
-          return;
+        if (!rooms[finalRoomCode]) {
+          console.log(`📌 Création de la salle ${finalRoomCode}`);
+          rooms[finalRoomCode] = [];
         }
 
-        const playerIndex = rooms[roomCode].findIndex((p) => p.username === username);
+        const playerIndex = rooms[finalRoomCode].findIndex((p) => p.username === username);
 
         if (playerIndex === -1) {
-          rooms[roomCode].push({ ws, username, avatar });
+          rooms[finalRoomCode].push({ ws, username, avatar });
+          console.log(`👥 ${username} a rejoint la salle ${finalRoomCode}`);
         } else {
-          console.log(`⚠️ ${username} est déjà dans la salle ${roomCode}`);
+          console.log(`⚠️ ${username} est déjà dans la salle ${finalRoomCode}`);
+          rooms[finalRoomCode][playerIndex].ws = ws; // Mise à jour WebSocket
         }
 
-        console.log(`👥 ${username} a rejoint la salle ${roomCode}`);
-        const playersList = rooms[roomCode].map(({ username, avatar }) => ({ username, avatar }));
-        broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
+        const playersList = rooms[finalRoomCode].map(({ username, avatar }) => ({ username, avatar }));
+        broadcast(finalRoomCode, { type: "ROOM_UPDATE", players: playersList });
+
+        if (rooms[finalRoomCode].length === 2) {
+          assignRoles(finalRoomCode);
+        }
       }
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);
@@ -69,9 +64,28 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    console.log("🔴 Client déconnecté");
-    handlePlayerDisconnection(ws);
+    const activeRoom = Object.keys(rooms).find((roomCode) =>
+      rooms[roomCode].some((player) => player.ws === ws)
+    );
+  
+    if (activeRoom) {
+      console.log(`🔴 Client déconnecté temporairement dans la salle ${activeRoom}`);
+  
+      // Ajoutez un délai pour permettre la reconnexion après redirection
+      setTimeout(() => {
+        const stillDisconnected = !rooms[activeRoom].some((player) => player.ws === ws);
+        if (stillDisconnected) {
+          console.log(`🧹 Suppression définitive du client dans la salle ${activeRoom}`);
+          handlePlayerDisconnection(ws);
+        } else {
+          console.log(`🔄 Client reconnecté dans la salle ${activeRoom}`);
+        }
+      }, 10000); // Donne 10 secondes pour se reconnecter
+    } else {
+      console.log("🔴 Client déconnecté hors salle de jeu.");
+    }
   });
+  
 });
 
 /**
@@ -86,11 +100,46 @@ function generateRoomCode() {
  */
 function findExistingRoom() {
   for (const roomCode in rooms) {
-    if (rooms[roomCode].length < 7) {
+    if (rooms[roomCode].length < 2) {
       return roomCode;
     }
   }
   return null;
+}
+
+/**
+ * 🎭 Assigne les rôles à deux joueurs (Marin et Pirate).
+ */
+function assignRoles(roomCode) {
+  if (!rooms[roomCode] || rooms[roomCode].length !== 2) {
+    console.error(`❌ Impossible d'attribuer les rôles : salle ${roomCode} invalide ou incomplète.`);
+    return;
+  }
+
+  const roles = ["Marin", "Pirate"].sort(() => Math.random() - 0.5);
+
+  console.log(`🎲 Rôles générés pour la salle ${roomCode} : ${roles.join(", ")}`);
+
+  rooms[roomCode].forEach((player, index) => {
+    player.role = roles[index];
+    if (player.ws.readyState === WebSocket.OPEN) {
+      const query = `?role=${roles[index].toLowerCase()}`;
+      const message = {
+        type: "YOUR_ROLE",
+        role: roles[index],
+        redirect: `/game/rooms/${roomCode}/distribution-roles${query}`,
+      };
+
+      console.log(`📤 Envoi du rôle à ${player.username} :`, message);
+
+      player.ws.send(JSON.stringify(message));
+    } else {
+      console.warn(`⚠️ Connexion WebSocket fermée pour ${player.username}, rôle non envoyé.`);
+    }
+    console.log(`🎭 Rôle attribué : ${player.username} → ${roles[index]}`);
+  });
+
+  console.log(`🎭 Rôles attribués avec succès dans la salle ${roomCode}`);
 }
 
 /**
@@ -112,7 +161,6 @@ function handlePlayerDisconnection(ws) {
   Object.keys(rooms).forEach((roomCode) => {
     const room = rooms[roomCode];
 
-    // Trouve et supprime le joueur correspondant au WebSocket déconnecté
     const updatedRoom = room.filter((player) => player.ws !== ws);
 
     if (updatedRoom.length === 0) {
@@ -120,9 +168,8 @@ function handlePlayerDisconnection(ws) {
       delete rooms[roomCode];
     } else {
       rooms[roomCode] = updatedRoom;
-      console.log(`🔄 Mise à jour des joueurs dans la salle ${roomCode}`);
+      console.log(`🔄 Mise à jour de la salle ${roomCode}`);
 
-      // Diffuse la mise à jour de la salle aux joueurs restants
       const playersList = updatedRoom.map(({ username, avatar }) => ({ username, avatar }));
       broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
     }

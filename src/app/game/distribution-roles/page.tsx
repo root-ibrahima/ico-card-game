@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import FooterGame from "../components/FooterGame";
-import HeaderGame from "../components/HeaderGame";
+import FooterGame from "../rooms/[roomcode]/components/FooterGame";
+import HeaderGame from "../rooms/[roomcode]/components/HeaderGame";
 import RoleCard from "./RoleCard";
 
 const roleDescriptions: { [key: string]: string } = {
