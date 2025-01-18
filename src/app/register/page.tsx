@@ -69,7 +69,7 @@ export default function RegisterPage() {
                         className="w-60 h-auto"
                     />
                     <h1 className="text-white text-3xl font-bold">
-                        Rejoignez l&apos;aventure ICO !
+                        Rejoignez l'aventure ICO !
                     </h1>
                 </div>
 
@@ -208,9 +208,9 @@ export default function RegisterPage() {
                     </div>
 
                     <p className="text-xs text-center text-gray-500 mt-4">
-                        En cliquant sur S&apos;inscrire, vous acceptez nos{' '}
+                        En cliquant sur S'inscrire, vous acceptez nos{' '}
                         <Link href="#" className="text-blue-500 hover:underline">
-                            conditions d&apos;utilisation
+                            conditions d'utilisation
                         </Link>
                         .
                     </p>
