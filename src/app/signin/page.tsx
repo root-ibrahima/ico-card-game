@@ -1,36 +1,43 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Importez useSearchParams
 import { useState } from 'react';
 import Link from 'next/link';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams(); // Récupère les paramètres de l'URL
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(null);
 
     try {
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (res.ok) {
-        router.push('/profile');
-      } else {
-        const errorData = await res.json();
-        setError(errorData.message || "Erreur lors de la connexion.");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Une erreur est survenue.');
+        return;
       }
-    } catch (error) {
-      setError("Une erreur est survenue.");
+
+      // Récupérez le paramètre "redirect" ou utilisez "/dashboard" par défaut
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      router.push(redirectTo); // Redirige vers la page souhaitée
+    } catch (err) {
+      console.error('Erreur lors de la connexion :', err);
+      setError('Une erreur inattendue est survenue.');
     }
   };
+
 
   return (
     <div className="relative w-full h-screen">
@@ -73,10 +80,10 @@ export default function SignInPage() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSignIn}>
             <div className="mb-4">
-              <label 
-                className="block text-gray-600 text-sm mb-2" 
+              <label
+                className="block text-gray-600 text-sm mb-2"
                 htmlFor="email"
               >
                 Adresse e-mail
@@ -100,8 +107,8 @@ export default function SignInPage() {
             </div>
 
             <div className="mb-4">
-              <label 
-                className="block text-gray-600 text-sm mb-2" 
+              <label
+                className="block text-gray-600 text-sm mb-2"
                 htmlFor="password"
               >
                 Mot de passe

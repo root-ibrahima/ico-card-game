@@ -1,20 +1,59 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabaseClient";
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const { email, password }: { email: string; password: string } =
+      await request.json();
 
-    // Connexion via Supabase
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      return NextResponse.json({ message: error.message }, { status: 401 });
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ message: 'Connexion réussie', user: data.user }, { status: 200 });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error || !data.session) {
+      console.error("API /auth/signin: Supabase signin error", error);
+      return NextResponse.json(
+        { error: error?.message || "Authentication failed" },
+        { status: 401 }
+      );
+    }
+
+    const { session } = data;
+
+    const response = NextResponse.json({
+      message: "Login successful",
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
+
+    response.cookies.set("access_token", session.access_token, {
+      maxAge: 7200, // 2 heures
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    response.cookies.set("refresh_token", session.refresh_token, {
+      maxAge: 60 * 60 * 24 * 30, // 30 jours
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    return response;
   } catch (error) {
-    console.error('Erreur lors de la connexion :', error);
-    return NextResponse.json({ message: 'Erreur interne du serveur', error: (error as Error).message }, { status: 500 });
+    console.error("API /auth/signin: Internal server error", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
