@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import FooterGame from "../components/FooterGame";
 import HeaderGame from "../components/HeaderGame";
 import RoleCard from "./RoleCard";
