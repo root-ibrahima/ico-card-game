@@ -42,20 +42,19 @@ const Home: React.FC = () => {
   }
 
   // Créer une nouvelle partie
-  const handleCreateGame = () => {
-    const newRoomCode = Math.random().toString(36).substring(2, 8).toUpperCase(); // Code aléatoire
-    dispatch({ type: "UPDATE_STATUS", payload: "active" }); // Met à jour le statut
-    router.push(`game/rooms/${newRoomCode}`); // Redirection vers la nouvelle salle
-  };
-
-  // Rejoindre une partie existante
   const handleJoinGame = () => {
     if (!roomCode.trim()) {
       alert("Veuillez entrer un code de salle !");
       return;
     }
-    router.push(`game/rooms/${roomCode.trim().toUpperCase()}`); // Redirection vers la salle existante
+    router.push(`game/rooms/${roomCode.trim().toUpperCase()}`);
   };
+  
+  const handleCreateGame = () => {
+    const newRoomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    router.push(`game/rooms/${newRoomCode}`);
+  };
+  
 
   return (
     <div className="w-full max-w-sm mx-auto bg-white rounded-lg shadow-md p-5 mb-20 overflow-y-auto">

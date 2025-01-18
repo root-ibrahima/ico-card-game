@@ -12,7 +12,7 @@ const roleDescriptions: { [key: string]: string } = {
   sirene: "Utilisez votre charme pour manipuler les joueurs et perturber le jeu !",
   captain: "Vous êtes le narrateur du jeu. Guidez les joueurs et annoncez les événements !",
 };
-
+const role = "marin";
 const RoleDistribution = () => {
 
   return (
