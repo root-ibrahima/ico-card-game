@@ -104,7 +104,14 @@ const Profile = () => {
   );
 };
 
-const Section = ({ title, items }) => {
+// Dans un fichier types.ts
+export interface SectionProps {
+  title: string;
+  items: string[];
+}
+
+
+const Section: React.FC<SectionProps> = ({ title, items }) => {
   return (
     <div className="mb-4 border-b border-gray-200 pb-2">
       <h4 className="text-lg font-semibold mb-2">{title}</h4>
