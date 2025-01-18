@@ -5,7 +5,6 @@ export function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     console.log("Middleware Debug: Pathname:", pathname);
-    console.log("Middleware Debug: Access Token:", accessToken);
 
     const publicRoutes = ["/signin", "/register"];
     const protectedRoutes = ["/dashboard", "/profile"];
