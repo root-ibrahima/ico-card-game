@@ -3,14 +3,14 @@ import { RoomEvent } from "@/types/index";
 let socket: WebSocket | null = null;
 
 /**
- * Connecte un utilisateur à une room spécifique et écoute les messages WebSocket.
+ * 📡 Connecte un utilisateur à une room spécifique et écoute les messages WebSocket.
  */
 export const connectToRoom = (
   roomCode: string,
   username: string,
   onMessage: (data: RoomEvent & { players?: { username: string; avatar: string }[] }) => void
 ) => {
-  const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:5000"; // ✅ Rendu configurable
+  const WS_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:5000";
 
   if (socket && socket.readyState === WebSocket.OPEN) {
     console.warn("⚠️ WebSocket déjà connecté !");
@@ -27,7 +27,7 @@ export const connectToRoom = (
     socket?.send(
       JSON.stringify({
         type: "JOIN_ROOM",
-        room: roomCode,
+        roomCode, // ✅ Assurer que la room est bien celle de l'URL
         username,
         avatar,
       })
@@ -38,6 +38,11 @@ export const connectToRoom = (
     try {
       const data: RoomEvent & { players?: { username: string; avatar: string }[] } = JSON.parse(event.data);
       console.log("📩 Message reçu du serveur :", data);
+
+      if (data.type === "ROOM_UPDATE" && data.players) {
+        console.log(`👥 Mise à jour des joueurs dans ${roomCode} :`, data.players);
+      }
+
       onMessage(data);
     } catch (error) {
       console.error("❌ Erreur lors du traitement du message WebSocket :", error);
@@ -55,14 +60,14 @@ export const connectToRoom = (
 };
 
 /**
- * Envoie un message dans la room via WebSocket.
+ * 📨 Envoie un message dans la room via WebSocket.
  */
 export const sendMessageToRoom = (roomCode: string, message: string) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(
       JSON.stringify({
         type: "NEW_MESSAGE",
-        room: roomCode,
+        roomCode,
         message,
       })
     );
@@ -72,7 +77,7 @@ export const sendMessageToRoom = (roomCode: string, message: string) => {
 };
 
 /**
- * Déconnecte proprement le WebSocket.
+ * 🔌 Déconnecte proprement le WebSocket.
  */
 export const disconnectSocket = () => {
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
