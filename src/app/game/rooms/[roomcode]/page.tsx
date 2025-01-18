@@ -2,36 +2,68 @@
 
 import React, { useEffect, useState } from "react";
 import { connectToRoom, disconnectSocket } from "@/lib/socket";
+import { useRouter, usePathname } from "next/navigation";
 import { RoomEvent } from "@/types";
-
-interface GameRoomPageProps {
-  params: { roomCode: string };
-}
 
 interface Player {
   username: string;
   avatar: string;
 }
 
-const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
-  const roomCode = params.roomCode;
+const GameRoomPage: React.FC = () => {
+  const router = useRouter();
+  const pathname = usePathname(); // Pour extraire roomCode depuis l'URL
+  const [roomCode, setRoomCode] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [newUsername, setNewUsername] = useState<string>("");
-  const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [role, setRole] = useState<string | null>(null);
   const [isCaptain, setIsCaptain] = useState<boolean>(false);
-  const [isHost] = useState<boolean>(false);
+  const [gameStarted, setGameStarted] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Demande le pseudo avant d'entrer
-  const handleJoinRoom = () => {
-    if (newUsername.trim() === "") return;
-    localStorage.setItem("username", newUsername);
-    setUsername(newUsername);
-  };
-
+  // Récupérer le code de la salle depuis l'URL
   useEffect(() => {
-    if (!username) return;
+    const segments = pathname.split("/");
+    const code = segments[segments.indexOf("rooms") + 1]; // Récupère le segment suivant "rooms"
+    if (code) {
+      setRoomCode(code);
+    } else {
+      console.error("❌ Aucun code de salle trouvé dans l'URL !");
+      router.push("/"); // Redirige vers la page d'accueil si aucun code n'est trouvé
+    }
+  }, [pathname, router]);
+
+  // Vérifie l'authentification avant de rejoindre une salle
+  useEffect(() => {
+    const checkAuth = async () => {
+      console.log("Debug: Checking authentication...");
+      try {
+        const response = await fetch("/api/auth/user");
+
+        if (response.ok) {
+          const userData = await response.json();
+          console.log("Debug: User authenticated:", userData);
+          setUsername(userData.email);
+        } else {
+          console.log("Debug: User not authenticated. Redirecting...");
+          router.push(`/auth/signin?redirect=/game/rooms/${roomCode}`);
+        }
+      } catch (error) {
+        console.error("❌ Debug: Error during authentication check:", error);
+        router.push(`/auth/signin?redirect=/game/rooms/${roomCode}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (roomCode) {
+      checkAuth();
+    }
+  }, [router, roomCode]);
+
+  // Connecte le joueur à la salle via WebSocket
+  useEffect(() => {
+    if (!username || !roomCode) return;
 
     const handleRoomEvent = (data: RoomEvent & { players?: Player[]; role?: string; isCaptain?: boolean }) => {
       console.log("🎮 Log reçu :", data);
@@ -58,37 +90,22 @@ const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
     };
   }, [roomCode, username]);
 
+  if (loading) {
+    return <p className="text-white">Chargement...</p>;
+  }
+
   if (!username) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-600 to-purple-700 flex flex-col items-center justify-center text-white p-4">
-        <h1 className="text-4xl font-bold mb-6">Entrez votre pseudo</h1>
-        <input
-          type="text"
-          value={newUsername}
-          onChange={(e) => setNewUsername(e.target.value)}
-          className="w-80 px-4 py-2 rounded-lg text-black focus:outline-none"
-          placeholder="Votre pseudo..."
-        />
-        <button
-          onClick={handleJoinRoom}
-          className="mt-4 bg-white text-purple-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-200 transition"
-        >
-          Rejoindre la partie
-        </button>
-      </div>
-    );
+    return <p className="text-white">Non connecté</p>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-600 to-purple-700 flex flex-col items-center p-6 text-white">
-      {/* Header */}
       <header className="w-full flex justify-between items-center mb-6 px-4">
-        <button className="text-white font-medium">⬅ Retour</button>
+        <button onClick={() => router.back()} className="text-white font-medium">⬅ Retour</button>
         <h1 className="text-3xl font-extrabold">Salle : {roomCode}</h1>
         <div className="w-8 h-8"></div>
       </header>
 
-      {/* Liste des joueurs */}
       <section className="grid grid-cols-4 gap-4 w-full max-w-3xl">
         {players.map((player, index) => (
           <div
@@ -99,30 +116,12 @@ const GameRoomPage: React.FC<GameRoomPageProps> = ({ params }) => {
             <p className="mt-2 font-semibold">{player.username}</p>
           </div>
         ))}
-        <div className="bg-purple-800 rounded-lg p-3 flex items-center justify-center text-xl font-bold text-white">
-          +++
-        </div>
       </section>
 
-      {/* Affichage du rôle du joueur (uniquement pour lui) */}
       {gameStarted && role && (
         <div className="mt-6 p-4 bg-gray-800 text-white font-bold rounded-lg shadow-lg">
           🎭 Ton rôle : {role}
           {isCaptain && " (Capitaine)"}
-        </div>
-      )}
-
-      {/* Démarrage de la partie */}
-      {gameStarted ? (
-        <h2 className="text-2xl font-bold mt-6">🎲 La partie a commencé ! Bonne chance !</h2>
-      ) : (
-        <div className="mt-8 flex flex-col items-center">
-          <h2 className="text-xl">⏳ En attente de 7 joueurs...</h2>
-          {isHost && (
-            <button className="mt-4 px-6 py-3 bg-green-500 text-white rounded-lg text-lg font-semibold shadow-md hover:bg-green-600 transition">
-              Démarrer la partie 🚀
-            </button>
-          )}
         </div>
       )}
     </div>

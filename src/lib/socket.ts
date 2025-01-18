@@ -24,14 +24,18 @@ export const connectToRoom = (
 
     const avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`;
 
-    socket?.send(
-      JSON.stringify({
-        type: "JOIN_ROOM",
-        roomCode, // ✅ Assurer que la room est bien celle de l'URL
-        username,
-        avatar,
-      })
-    );
+    try {
+      socket?.send(
+        JSON.stringify({
+          type: "JOIN_ROOM",
+          roomCode, // Assurez-vous d'envoyer le bon code de salle
+          username,
+          avatar,
+        })
+      );
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi du message JOIN_ROOM :", error);
+    }
   };
 
   socket.onmessage = (event) => {
@@ -64,13 +68,17 @@ export const connectToRoom = (
  */
 export const sendMessageToRoom = (roomCode: string, message: string) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(
-      JSON.stringify({
-        type: "NEW_MESSAGE",
-        roomCode,
-        message,
-      })
-    );
+    try {
+      socket.send(
+        JSON.stringify({
+          type: "NEW_MESSAGE",
+          roomCode,
+          message,
+        })
+      );
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi du message :", error);
+    }
   } else {
     console.error("❌ WebSocket non connecté, impossible d'envoyer le message.");
   }

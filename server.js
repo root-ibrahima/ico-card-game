@@ -1,4 +1,4 @@
-const { WebSocketServer } = require("ws");
+const { WebSocketServer, WebSocket } = require("ws");
 const crypto = require("crypto");
 
 const port = 5000;
@@ -28,47 +28,40 @@ wss.on("connection", (ws) => {
       }
 
       if (type === "JOIN_ROOM") {
-        if (createNewRoom) {
-          // ✅ FORCER LA CRÉATION D'UNE NOUVELLE SALLE
+        if (roomCode) {
+          console.log(`🔗 Code de salle reçu de l'URL : ${roomCode}`);
+          if (!rooms[roomCode]) {
+            console.log(`📌 Création de la salle ${roomCode}...`);
+            rooms[roomCode] = [];
+          }
+        } else if (createNewRoom) {
           roomCode = generateRoomCode();
           console.log(`🆕 Nouvelle salle forcée : ${roomCode}`);
-        } else if (!roomCode) {
-          // ✅ CHERCHER UNE SALLE EXISTANTE OU EN CRÉER UNE
+          rooms[roomCode] = [];
+        } else {
           roomCode = findExistingRoom() || generateRoomCode();
           console.log(`🔄 Salle trouvée/attribuée à ${username} : ${roomCode}`);
+          if (!rooms[roomCode]) {
+            rooms[roomCode] = [];
+          }
         }
 
-        // ✅ Vérifier si la salle existe, sinon la créer
         if (!rooms[roomCode]) {
-          console.log(`📌 Création de la salle ${roomCode}...`);
-          rooms[roomCode] = [];
+          console.error(`❌ Erreur : La salle ${roomCode} n'a pas pu être créée.`);
+          return;
         }
 
-        // ✅ Vérifier si le joueur est déjà présent dans la salle
         const playerIndex = rooms[roomCode].findIndex((p) => p.username === username);
 
         if (playerIndex === -1) {
-          // ✅ Ajouter le joueur s'il n'est pas déjà dans la salle
-          rooms[roomCode].push({ ws, username, avatar, role: null, isCaptain: false });
+          rooms[roomCode].push({ ws, username, avatar });
         } else {
-          console.log(`⚠️ ${username} est déjà dans la salle ${roomCode}, pas de duplication.`);
+          console.log(`⚠️ ${username} est déjà dans la salle ${roomCode}`);
         }
 
         console.log(`👥 ${username} a rejoint la salle ${roomCode}`);
-
-        // Liste des joueurs pour l'affichage côté client
-        const playersList = rooms[roomCode].map((p) => ({
-          username: p.username,
-          avatar: p.avatar,
-        }));
-
-        // Envoyer la mise à jour de la salle
+        const playersList = rooms[roomCode].map(({ username, avatar }) => ({ username, avatar }));
         broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
-
-        // Assigner les rôles si la salle atteint 7 joueurs
-        if (rooms[roomCode].length === 7) {
-          assignRoles(roomCode);
-        }
       }
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);
@@ -77,19 +70,19 @@ wss.on("connection", (ws) => {
 
   ws.on("close", () => {
     console.log("🔴 Client déconnecté");
-    cleanRooms();
+    handlePlayerDisconnection(ws);
   });
 });
 
 /**
- * 🔥 Génère un code de room aléatoire (ex: "XQ1P6R").
+ * 🔥 Génère un code de room aléatoire.
  */
 function generateRoomCode() {
   return crypto.randomBytes(3).toString("hex").toUpperCase();
 }
 
 /**
- * 🔎 Recherche une salle existante qui n'a pas encore 7 joueurs.
+ * 🔎 Recherche une salle existante.
  */
 function findExistingRoom() {
   for (const roomCode in rooms) {
@@ -101,67 +94,37 @@ function findExistingRoom() {
 }
 
 /**
- * 🎭 Assigne les rôles une fois que 7 joueurs sont dans la salle.
- */
-function assignRoles(roomCode) {
-  if (!rooms[roomCode] || rooms[roomCode].length !== 7) return;
-
-  const roles = ["Marin", "Marin", "Marin", "Pirate", "Pirate", "Pirate", "Sirène"];
-  const shuffledRoles = roles.sort(() => Math.random() - 0.5);
-
-  rooms[roomCode].forEach((player, index) => {
-    player.role = shuffledRoles[index];
-  });
-
-  // Sélectionner un capitaine au hasard
-  const randomCaptainIndex = Math.floor(Math.random() * 7);
-  rooms[roomCode][randomCaptainIndex].isCaptain = true;
-
-  console.log(`🎭 Rôles assignés dans la salle ${roomCode}:`);
-  rooms[roomCode].forEach((player) => {
-    console.log(`${player.username} -> ${player.role}${player.isCaptain ? " (Capitaine)" : ""}`);
-  });
-
-  // Envoyer uniquement la liste des joueurs aux autres joueurs (sans rôle)
-  broadcast(roomCode, {
-    type: "GAME_START",
-    players: rooms[roomCode].map(({ username, avatar }) => ({ username, avatar })),
-  });
-
-  // Envoyer à chaque joueur son propre rôle
-  rooms[roomCode].forEach((player) => {
-    if (player.ws.readyState === player.ws.OPEN) {
-      player.ws.send(
-        JSON.stringify({
-          type: "YOUR_ROLE",
-          role: player.role,
-          isCaptain: player.isCaptain,
-        })
-      );
-    }
-  });
-}
-
-/**
  * 📡 Envoie un message à tous les joueurs d'une salle.
  */
 function broadcast(roomCode, message) {
   if (!rooms[roomCode]) return;
   rooms[roomCode].forEach(({ ws }) => {
-    if (ws.readyState === ws.OPEN) {
+    if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
     }
   });
 }
 
 /**
- * 🧹 Nettoie les rooms des joueurs déconnectés.
+ * 🧹 Gère la déconnexion d'un joueur et nettoie les rooms.
  */
-function cleanRooms() {
+function handlePlayerDisconnection(ws) {
   Object.keys(rooms).forEach((roomCode) => {
-    rooms[roomCode] = rooms[roomCode].filter((player) => player.ws.readyState === WebSocket.OPEN);
-    if (rooms[roomCode].length === 0) {
+    const room = rooms[roomCode];
+
+    // Trouve et supprime le joueur correspondant au WebSocket déconnecté
+    const updatedRoom = room.filter((player) => player.ws !== ws);
+
+    if (updatedRoom.length === 0) {
+      console.log(`🧹 Suppression de la salle vide : ${roomCode}`);
       delete rooms[roomCode];
+    } else {
+      rooms[roomCode] = updatedRoom;
+      console.log(`🔄 Mise à jour des joueurs dans la salle ${roomCode}`);
+
+      // Diffuse la mise à jour de la salle aux joueurs restants
+      const playersList = updatedRoom.map(({ username, avatar }) => ({ username, avatar }));
+      broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
     }
   });
 }
