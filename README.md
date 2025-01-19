@@ -74,6 +74,8 @@ NEXT_PUBLIC_API_URL="http://localhost:3000/api"
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL="https://shddkejukrddghgmddmb.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoZGRrZWp1a3JkZGdoZ21kZG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzczMTUsImV4cCI6MjA1MjM1MzMxNX0.iSuYjhzTSfYoPMw7Gggsudc_imNR22x-SOgRH8uVAK0"
+SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoZGRrZWp1a3JkZGdoZ21kZG1iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjc3NzMxNSwiZXhwIjoyMDUyMzUzMzE1fQ.h0BKZBdbFHkeYEu_SJKyoK9I4zEtcIkXe4zoG_cceAc"
+
 
 # Database (Prisma)
 DATABASE_URL="postgresql://postgres.shddkejukrddghgmddmb:Randorisec69*@aws-0-us-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
@@ -81,6 +83,9 @@ DIRECT_URL="postgresql://postgres.shddkejukrddghgmddmb:Randorisec69*@aws-0-us-we
 
 # NextAuth
 NEXTAUTH_SECRET="secret"
+
+EMAIL_APP_USER="alex2709.meme@gmail.com"
+EMAIL_APP_PASSWORD="cmob kiwc sbdf ebkf"
 ```
 
 Configurer Prisma : Synchronisez les modèles Prisma avec la base de données :
