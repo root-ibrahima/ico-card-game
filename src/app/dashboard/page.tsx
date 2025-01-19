@@ -16,7 +16,7 @@ export default function DashboardPage() {
         setUser(data);
       } else {
         // Redirect to signin if user is not authenticated
-        router.push("/auth/signin");
+        router.push("/signin");
       }
       setLoading(false);
     };

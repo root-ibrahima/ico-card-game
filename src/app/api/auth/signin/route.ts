@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (error || !data.session) {
-      console.error("API /auth/signin: Supabase signin error", error);
       return NextResponse.json(
         { error: error?.message || "Authentication failed" },
         { status: 401 }
@@ -50,7 +49,6 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("API /auth/signin: Internal server error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
