@@ -52,10 +52,11 @@ export default function SignInPage() {
       {/* Content */}
       <div className="relative h-full flex flex-col items-center justify-center">
         {/* Logo outside white box */}
-        <div className="flex flex-col items-center mb-7">
           <Image
-            src="./img/ICO_LOGO 1.png"
+            src="/img/ICO_LOGO_1.png"
             alt="Logo ICO"
+            width={240}
+            height={60}
             className="w-60 h-auto"
           />
           <h1 className="text-white text-3xl font-bold">
@@ -157,8 +158,7 @@ export default function SignInPage() {
             </Link>
             .
           </p>
-        </div>
+        </div> 
       </div>
-    </div>
   );
 }
