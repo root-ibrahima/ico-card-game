@@ -3,7 +3,7 @@
  */
 export interface Player {
   id: string;
-  name: string;
+  username: string;
   role: "marin" | "pirate" | "sirene" | "captain"; 
   avatar: string;
   isCaptain: boolean;

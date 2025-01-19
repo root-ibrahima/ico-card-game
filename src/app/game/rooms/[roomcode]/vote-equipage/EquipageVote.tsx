@@ -57,7 +57,7 @@ const EquipageVote = ({ currentUser, roomCode, captain, crewMembers }: VoteProps
             }
         };
 
-        connectToRoom(roomCode, currentUser.name, handleRoomEvent);
+        connectToRoom(roomCode, currentUser.username, handleRoomEvent);
 
         return () => {
             disconnectSocket();
@@ -65,13 +65,13 @@ const EquipageVote = ({ currentUser, roomCode, captain, crewMembers }: VoteProps
     }, [roomCode, currentUser, router]);
 
     const handleVote = (vote: "yes" | "no") => {
-        console.log(`🗳️ ${currentUser.name} vote :`, vote);
+        console.log(`🗳️ ${currentUser.username} vote :`, vote);
 
-        sendMessageToRoom(currentUser.name, roomCode, "VOTE_CREW", {
+        sendMessageToRoom(currentUser.username, roomCode, "VOTE_CREW", {
             vote,
             selectedCrew: crewMembers.map((c) => ({
                 id: c.id,
-                name: c.name,
+                name: c.username,
                 role: c.role,
                 avatar: c.avatar,
                 isCaptain: c.isCaptain,
@@ -88,7 +88,7 @@ const EquipageVote = ({ currentUser, roomCode, captain, crewMembers }: VoteProps
             <HeaderGame />
             <main className="flex-grow flex flex-col items-center justify-center text-center px-4">
                 <h1 className="text-2xl font-bold text-gray-800">Vote sur l&apos;équipage</h1>
-                <p className="text-lg text-gray-700">Capitaine : {captain.name}</p>
+                <p className="text-lg text-gray-700">Capitaine : {captain.username}</p>
 
                 {loading ? (
                     <p className="text-lg font-bold text-blue-600">Calcul des votes en cours...</p>
