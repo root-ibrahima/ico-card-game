@@ -11,7 +11,7 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, description }) => {
       {/* Image du rôle */}
       <div className="w-48 h-48 mb-6">
         <Image
-          src={`/cartes/roles/${role}.png`}
+          src={`/cartes/roles/Carte-${role}.png`}
           alt={role}
           width={192}
           height={192}
