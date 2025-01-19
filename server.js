@@ -157,34 +157,41 @@ wss.on("connection", (ws) => {
   
       // Gestion du vote d'équipage
       if (type === "VOTE_CREW" && roomCode) {
+        console.log(`📩 [VOTE_CREW] Reçu pour la salle ${roomCode} de la part de ${username}`);
+      
         const room = rooms[roomCode];
         if (!room) {
-          console.error(`❌ Salle introuvable : ${roomCode}`);
+          console.error(`❌ [VOTE_CREW] Salle introuvable : ${roomCode}`);
           return;
         }
-  
+      
         const player = room.find((p) => p.username === username);
         if (!player) {
-          console.error(`❌ Joueur introuvable dans la salle ${roomCode} : ${username}`);
+          console.error(`❌ [VOTE_CREW] Joueur introuvable dans la salle ${roomCode} : ${username}`);
           return;
         }
-  
+      
         // Ajout du vote de l'utilisateur
         player.vote = data.vote; // "yes" ou "no"
-        console.log(`🗳️ Vote reçu : ${username} a voté "${data.vote}"`);
-  
+        console.log(`🗳️ [VOTE_CREW] Vote reçu : ${username} a voté "${data.vote}" dans la salle ${roomCode}`);
+      
         // Vérifie si tous les joueurs non membres de l'équipage ont voté
-        const allVoted = room
-          .filter((p) => !selectedCrew.includes(p.username)) // Exclure les membres de l'équipage
-          .every((p) => p.vote !== undefined);
-  
+        const totalPlayers = room.length;
+        const votesReceived = room.filter((p) => p.vote !== undefined).length;
+        const requiredVotes = totalPlayers - 4; // Nombre requis de votes
+        const allVoted = votesReceived === requiredVotes;
+      
+        console.debug(`🔍 [VOTE_CREW] Votes reçus : ${votesReceived}/${requiredVotes} (Total joueurs : ${totalPlayers})`);
+      
         if (allVoted) {
+          console.log(`✅ [VOTE_CREW] Tous les votes nécessaires ont été reçus dans la salle ${roomCode}`);
+      
           // Compte des votes
           const votesYes = room.filter((p) => p.vote === "yes").length;
           const votesNo = room.filter((p) => p.vote === "no").length;
-  
-          console.log(`✅ Résultats du vote : Oui = ${votesYes}, Non = ${votesNo}`);
-  
+      
+          console.log(`📊 [VOTE_CREW] Résultats des votes : Oui = ${votesYes}, Non = ${votesNo}`);
+      
           // Diffuser les résultats à tous les joueurs
           broadcast(roomCode, {
             type: "VOTE_RESULTS",
@@ -192,11 +199,22 @@ wss.on("connection", (ws) => {
             votesNo,
             approved: votesYes > votesNo, // Approuvé si "yes" est majoritaire
           });
-  
+      
+          console.log(`📤 [VOTE_CREW] Résultats envoyés aux joueurs de la salle ${roomCode}`);
+      
           // Réinitialiser les votes pour la prochaine phase
-          room.forEach((p) => delete p.vote);
+          room.forEach((p) => {
+            delete p.vote;
+            console.debug(`♻️ [VOTE_CREW] Réinitialisation du vote pour ${p.username}`);
+          });
+      
+          console.log(`🔄 [VOTE_CREW] Votes réinitialisés pour la salle ${roomCode}`);
+        } else {
+          console.log(
+            `⏳ [VOTE_CREW] En attente des votes restants dans la salle ${roomCode} (${votesReceived}/${requiredVotes})`
+          );
         }
-      }
+      }      
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);
     }
@@ -311,16 +329,18 @@ function handlePlayerDisconnection(ws) {
   Object.keys(rooms).forEach((roomCode) => {
     const room = rooms[roomCode];
 
+    // Trouve et supprime le joueur correspondant au WebSocket déconnecté
     const updatedRoom = room.filter((player) => player.ws !== ws);
 
     if (updatedRoom.length === 0) {
+      console.log(`🧹 Suppression de la salle vide : ${roomCode}`);
       delete rooms[roomCode];
     } else {
       rooms[roomCode] = updatedRoom;
-      const playersList = updatedRoom.map(({ username, avatar }) => ({
-        username,
-        avatar,
-      }));
+      console.log(`🔄 Mise à jour des joueurs dans la salle ${roomCode}`);
+
+      // Diffuse la mise à jour de la salle aux joueurs restants
+      const playersList = updatedRoom.map(({ username, avatar }) => ({ username, avatar }));
       broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
     }
   });
