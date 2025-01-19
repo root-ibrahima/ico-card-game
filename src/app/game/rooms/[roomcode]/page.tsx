@@ -31,8 +31,6 @@ const GameRoomPage: React.FC = () => {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [crewSelectionPhase, setCrewSelectionPhase] = useState<boolean>(false);
   const [votePhase, setVotePhase] = useState<boolean>(false);
-  // Remove unused variable 'voters'
-  const [crewMembers, setCrewMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -98,6 +96,7 @@ const GameRoomPage: React.FC = () => {
           break;
         case "CREW_SELECTED":
           if (data.selectedCrew) {
+
             setCrewMembers(data.selectedCrew);
             setCrewSelectionPhase(false);
             setVotePhase(true);
@@ -105,6 +104,21 @@ const GameRoomPage: React.FC = () => {
           break;
         case "VOTE_RESULTS":
           setVotePhase(false);
+          setVoteResult(data.approved || false);
+
+          // Si accepté, avancer à la prochaine étape après 3 secondes
+          if (data.approved) {
+            setTimeout(() => {
+              setVoteResult(null); // Réinitialiser
+              // Avancer à l'étape suivante
+            }, 3000);
+          } else {
+            // Si rejeté, relancer la phase de sélection
+            setTimeout(() => {
+              setVoteResult(null);
+              setCrewSelectionPhase(true);
+            }, 3000);
+          }
           break;
         default:
           console.warn("⚠️ Événement inattendu :", data);
@@ -130,6 +144,7 @@ const GameRoomPage: React.FC = () => {
     }
   };
 
+
   if (loading) return <p className="text-white">Chargement...</p>;
   if (!username) return <p className="text-white">Non connecté</p>;
 
@@ -139,12 +154,6 @@ const GameRoomPage: React.FC = () => {
         <>
           <HeaderGame />
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
-            {crewSelectionPhase && isCaptain ? (
-                <SelectCrewPage
-                  players={players.filter((p) => p.username !== username)}
-                  roomCode={roomCode || ""}
-                  username={username || ""}
-                />
             ) : crewSelectionPhase ? (
               <p className="text-center text-gray-600">
                 En attente que le capitaine sélectionne son équipage...
