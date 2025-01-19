@@ -141,7 +141,7 @@ const GameRoomPage: React.FC = () => {
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
             {crewSelectionPhase && isCaptain ? (
                 <SelectCrewPage
-                  player={players.filter((p) => p.username !== username)}
+                  players={players.filter((p) => p.username !== username)}
                   roomCode={roomCode || ""}
                   username={username || ""}
                 />
