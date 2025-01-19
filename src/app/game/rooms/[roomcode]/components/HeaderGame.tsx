@@ -46,7 +46,7 @@ const HeaderGame: React.FC = () => {
 
       {/* Modal de confirmation */}
       {showConfirm && (
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm text-center">
             <h3 className="text-lg font-semibold mb-4">Quitter la partie ?</h3>
             <p className="text-gray-600 mb-6">

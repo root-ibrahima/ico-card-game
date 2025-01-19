@@ -27,6 +27,7 @@ wss.on("connection", (ws) => {
         avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`;
       }
 
+      // Gestion de la connexion à une salle
       if (type === "JOIN_ROOM") {
         if (roomCode) {
           console.log(`🔗 Code de salle reçu de l'URL : ${roomCode}`);
@@ -54,14 +55,61 @@ wss.on("connection", (ws) => {
         const playerIndex = rooms[roomCode].findIndex((p) => p.username === username);
 
         if (playerIndex === -1) {
-          rooms[roomCode].push({ ws, username, avatar });
+          rooms[roomCode].push({ ws, username, avatar, roleConfirmed: false });
         } else {
           console.log(`⚠️ ${username} est déjà dans la salle ${roomCode}`);
         }
 
         console.log(`👥 ${username} a rejoint la salle ${roomCode}`);
-        const playersList = rooms[roomCode].map(({ username, avatar }) => ({ username, avatar }));
+        const playersList = rooms[roomCode].map(({ username, avatar }) => ({
+          username,
+          avatar,
+        }));
         broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
+      }
+
+      // Début de la partie
+      if (type === "GAME_START" && roomCode) {
+        console.log(`🎮 La partie dans la salle ${roomCode} commence !`);
+
+        if (!rooms[roomCode] || rooms[roomCode].length === 0) {
+          console.error(`❌ Impossible de démarrer la partie : la salle ${roomCode} est vide.`);
+          return;
+        }
+
+        const playersList = rooms[roomCode].map(({ username, avatar }) => ({
+          username,
+          avatar,
+        }));
+        broadcast(roomCode, { type: "GAME_START", players: playersList });
+
+        console.log(`🚀 Partie démarrée pour la salle ${roomCode} avec les joueurs :`, playersList);
+        assignRoles(roomCode);
+      }
+
+      // Confirmation du rôle par le joueur
+      if (type === "ROLE_CONFIRMED" && roomCode) {
+        const room = rooms[roomCode];
+        if (!room) {
+          console.error(`❌ Salle introuvable : ${roomCode}`);
+          return;
+        }
+
+        const player = room.find((p) => p.username === username);
+        if (!player) {
+          console.error(`❌ Joueur introuvable dans la salle ${roomCode} : ${username}`);
+          return;
+        }
+
+        player.roleConfirmed = true;
+        console.log(`✅ ${username} a confirmé son rôle dans la salle ${roomCode}`);
+
+        // Vérifie si tous les joueurs ont confirmé leur rôle
+        const allConfirmed = room.every((p) => p.roleConfirmed);
+        if (allConfirmed) {
+          console.log(`🎉 Tous les joueurs ont confirmé leurs rôles dans la salle ${roomCode}`);
+          broadcast(roomCode, { type: "ALL_ROLES_CONFIRMED" });
+        }
       }
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);
@@ -91,6 +139,35 @@ function findExistingRoom() {
     }
   }
   return null;
+}
+
+function assignRoles(roomCode) {
+  if (!rooms[roomCode] || rooms[roomCode].length !== 2) {
+    console.error(`❌ Impossible d'attribuer les rôles : salle ${roomCode} invalide ou incomplète.`);
+    return;
+  }
+
+  const roles = ["Marin", "Pirate"].sort(() => Math.random() - 0.5);
+  console.log(`🎲 Rôles générés pour la salle ${roomCode} : ${roles.join(", ")}`);
+  
+  rooms[roomCode].forEach((player, index) => {
+    const role = roles[index];
+    player.role = role;
+
+    if (player.ws.readyState === WebSocket.OPEN) {
+      const message = {
+        type: "YOUR_ROLE",
+        role,
+      };
+      console.log(`📤 Envoi du rôle à ${player.username} :`, message);
+      player.ws.send(JSON.stringify(message));
+    } else {
+      console.warn(`⚠️ Connexion WebSocket fermée pour ${player.username}, rôle non envoyé.`);
+    }
+    console.log(`🎭 Rôle attribué : ${player.username} → ${role}`);
+  });
+
+  console.log(`🎭 Rôles attribués avec succès dans la salle ${roomCode}`);
 }
 
 /**
@@ -123,7 +200,10 @@ function handlePlayerDisconnection(ws) {
       console.log(`🔄 Mise à jour des joueurs dans la salle ${roomCode}`);
 
       // Diffuse la mise à jour de la salle aux joueurs restants
-      const playersList = updatedRoom.map(({ username, avatar }) => ({ username, avatar }));
+      const playersList = updatedRoom.map(({ username, avatar }) => ({
+        username,
+        avatar,
+      }));
       broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
     }
   });

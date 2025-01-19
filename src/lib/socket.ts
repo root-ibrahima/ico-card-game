@@ -66,14 +66,14 @@ export const connectToRoom = (
 /**
  * 📨 Envoie un message dans la room via WebSocket.
  */
-export const sendMessageToRoom = (roomCode: string, message: string) => {
+export const sendMessageToRoom = (username: string, roomCode: string, type: string) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     try {
       socket.send(
         JSON.stringify({
-          type: "NEW_MESSAGE",
+          type,
+          username,
           roomCode,
-          message,
         })
       );
     } catch (error) {
@@ -83,6 +83,7 @@ export const sendMessageToRoom = (roomCode: string, message: string) => {
     console.error("❌ WebSocket non connecté, impossible d'envoyer le message.");
   }
 };
+
 
 /**
  * 🔌 Déconnecte proprement le WebSocket.
@@ -94,3 +95,5 @@ export const disconnectSocket = () => {
     socket = null;
   }
 };
+
+

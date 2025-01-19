@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import HeaderGame from "../components/HeaderGame";
-import FooterGame from "../components/FooterGame";
-import PlayerCard from "./PlayerCard";
+import HeaderGame from "../components/HeaderGameGame from "../components/Foo../components/FooterGameerCard";
 
 const SelectCrewPage = () => {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
