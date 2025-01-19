@@ -133,10 +133,64 @@ wss.on("connection", (ws) => {
       }
 
       // Gestion de la sélection de l'équipage
+      console.log("📩 Roomcode :", roomCode);
+      console.log("📩 Type :", type);
       if (type === "CREW_SELECTED" && roomCode) {
-        console.log(`📤 Équipage sélectionné par le capitaine pour la salle ${roomCode}:`, selectedCrew);
-
+        console.log(`📤 Équipage sélectionné pour la salle ${roomCode}:`, selectedCrew);
+      
+        // Diffuser un ROOM_UPDATE si nécessaire pour synchroniser la liste des joueurs
+        const playersList = rooms[roomCode].map(({ username, avatar }) => ({
+          username,
+          avatar,
+        }));
+        broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
+      
+        // Diffuser CREW_SELECTED
         broadcast(roomCode, { type: "CREW_SELECTED", selectedCrew });
+      }
+      
+
+      // Gestion du vote d'équipage
+      if (type === "VOTE_CREW" && roomCode) {
+        const room = rooms[roomCode];
+        if (!room) {
+          console.error(`❌ Salle introuvable : ${roomCode}`);
+          return;
+        }
+
+        const player = room.find((p) => p.username === username);
+        if (!player) {
+          console.error(`❌ Joueur introuvable dans la salle ${roomCode} : ${username}`);
+          return;
+        }
+
+        // Ajout du vote de l'utilisateur
+        player.vote = data.vote; // "yes" ou "no"
+        console.log(`🗳️ Vote reçu : ${username} a voté "${data.vote}"`);
+
+        // Vérifie si tous les joueurs non membres de l'équipage ont voté
+        const allVoted = room
+          .filter((p) => !data.selectedCrew.includes(p.username)) // Exclure les membres de l'équipage
+          .every((p) => p.vote !== undefined);
+
+        if (allVoted) {
+          // Compte des votes
+          const votesYes = room.filter((p) => p.vote === "yes").length;
+          const votesNo = room.filter((p) => p.vote === "no").length;
+
+          console.log(`✅ Résultats du vote : Oui = ${votesYes}, Non = ${votesNo}`);
+
+          // Diffuser les résultats à tous les joueurs
+          broadcast(roomCode, {
+            type: "VOTE_RESULTS",
+            votesYes,
+            votesNo,
+            approved: votesYes > votesNo, // Approuvé si "yes" est majoritaire
+          });
+
+          // Réinitialiser les votes pour la prochaine phase
+          room.forEach((p) => delete p.vote);
+        }
       }
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);
@@ -229,13 +283,20 @@ function assignCaptain(roomCode) {
  * 📡 Envoie un message à tous les joueurs d'une salle.
  */
 function broadcast(roomCode, message) {
-  if (!rooms[roomCode]) return;
+  if (!rooms[roomCode]) {
+    console.warn(`⚠️ Aucune salle trouvée pour ${roomCode}`);
+    return;
+  }
   rooms[roomCode].forEach(({ ws }) => {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
+    } else {
+      console.warn(`⚠️ WebSocket non ouvert pour un client dans la salle ${roomCode}`);
     }
   });
+  console.log(`📤 Message diffusé à la salle ${roomCode}:`, message);
 }
+
 
 /**
  * 🧹 Gère la déconnexion d'un joueur et nettoie les rooms.

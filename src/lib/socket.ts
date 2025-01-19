@@ -66,16 +66,22 @@ export const connectToRoom = (
 /**
  * 📨 Envoie un message dans la room via WebSocket.
  */
-export const sendMessageToRoom = (username: string, roomCode: string, type: string) => {
+export const sendMessageToRoom = (
+  username: string,
+  roomCode: string,
+  type: string,
+  additionalData?: Record<string, any> // Pour envoyer des données supplémentaires
+) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     try {
-      socket.send(
-        JSON.stringify({
-          type,
-          username,
-          roomCode,
-        })
-      );
+      const message = {
+        type,
+        username,
+        roomCode,
+        ...additionalData, // Fusionne les données supplémentaires (comme `selectedCrew`) dans l'objet
+      };
+
+      socket.send(JSON.stringify(message));
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi du message :", error);
     }
@@ -83,6 +89,7 @@ export const sendMessageToRoom = (username: string, roomCode: string, type: stri
     console.error("❌ WebSocket non connecté, impossible d'envoyer le message.");
   }
 };
+
 
 
 /**

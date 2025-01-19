@@ -32,12 +32,10 @@ const SelectCrewPage: React.FC<SelectCrewPageProps> = ({ players, roomCode, user
   const validateSelection = () => {
     if (selectedPlayers.length === 3) {
       console.log("✅ Équipage sélectionné :", selectedPlayers);
-      sendMessageToRoom(username, roomCode, {
-        type: "CREW_SELECTED",
-        selectedCrew: selectedPlayers,
-      });
+      sendMessageToRoom(username, roomCode, "CREW_SELECTED", { selectedCrew: selectedPlayers });
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
