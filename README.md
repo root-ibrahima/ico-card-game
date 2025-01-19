@@ -272,6 +272,6 @@ Ce projet est sous licence MIT. Consultez le fichier LICENSE pour plus de détai
 - Ibrahima DIALLO
 - Sebastian ONISE
 - Damien DA SILVA
-- Alexandre MEME
+- Alexandre MEME is Alexpollux and AlexandreLink
 
 🚀 Amusez-vous bien avec ICO Card Game ! 🃏
