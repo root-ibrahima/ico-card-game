@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 /**
  * 🔍 Gestion de la méthode GET pour récupérer une room spécifique.
  */
-export async function GET(req: Request, { params }: { params: { roomId: string } }) {
+export async function GET(_: Request, { params }: { params: { roomId: string } }) {
   const { roomId } = params;
 
   if (!roomId) {
@@ -66,7 +66,7 @@ export async function PATCH(req: Request, { params }: { params: { roomId: string
 /**
  * 🗑️ Gestion de la méthode DELETE pour supprimer une room spécifique.
  */
-export async function DELETE(req: Request, { params }: { params: { roomId: string } }) {
+export async function DELETE(_: Request, { params }: { params: { roomId: string } }) {
   const { roomId } = params;
 
   if (!roomId) {
