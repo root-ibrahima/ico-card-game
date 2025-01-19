@@ -5,50 +5,89 @@ type User = {
   id: string;
   name: string;
   email: string;
-  profile_picture: string;
   status: string;
 };
 
 const UserTable: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from("users").select("*");
-    if (error) {
-      console.error("Error fetching users:", error.message);
-    } else {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Récupérer les données utilisateur
+      const { data, error } = await supabase
+        .from("users") // Assurez-vous que la table est correcte
+        .select("id, name, email, status");
+
+      if (error) {
+        throw error;
+      }
+
       setUsers(data || []);
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error fetching users:", err.message);
+    } finally {
+      setIsLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchUsers();
+
+    // Abonnement Realtime
+    const subscription = supabase
+      .from("users") // Nom de la table
+      .on("postgres_changes", { event: "UPDATE", schema: "public" }, (payload) => {
+        console.log("Realtime update:", payload);
+        const updatedUser = payload.new;
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.id === updatedUser.id ? { ...user, status: updatedUser.status } : user
+          )
+        );
+      })
+      .subscribe();
+
+    // Cleanup
+    return () => {
+      supabase.removeSubscription(subscription);
+    };
   }, []);
 
-  if (loading) return <div>Loading users...</div>;
+  if (isLoading) {
+    return <div>Chargement des utilisateurs...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">Erreur: {error}</div>;
+  }
 
   return (
-    <table className="min-w-full bg-white border border-gray-300">
-      <thead>
-        <tr>
-          <th className="py-2 px-4 border-b">Name</th>
-          <th className="py-2 px-4 border-b">Email</th>
-          <th className="py-2 px-4 border-b">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((user) => (
-          <tr key={user.id}>
-            <td className="py-2 px-4 border-b">{user.name}</td>
-            <td className="py-2 px-4 border-b">{user.email}</td>
-            <td className="py-2 px-4 border-b">{user.status}</td>
+    <div className="overflow-x-auto">
+      <table className="min-w-full bg-white">
+        <thead>
+          <tr>
+            <th className="px-6 py-3 border-b-2">Nom</th>
+            <th className="px-6 py-3 border-b-2">Email</th>
+            <th className="px-6 py-3 border-b-2">Statut</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id}>
+              <td className="px-6 py-4 border-b">{user.name || "N/A"}</td>
+              <td className="px-6 py-4 border-b">{user.email}</td>
+              <td className="px-6 py-4 border-b">{user.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 
