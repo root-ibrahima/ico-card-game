@@ -4,19 +4,19 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 /**
- * 🔍 Gestion de la méthode GET pour récupérer une room spécifique.
+ * 🔍 GET : Récupérer une room spécifique
  */
-export async function GET(_: Request, { params }: { params: { roomId: string } }) {
-  const { roomId } = params;
+export async function GET(_: Request, { params }: { params: { roomcode: string } }) {
+  const { roomcode } = params;
 
-  if (!roomId) {
-    return NextResponse.json({ error: "❌ Room ID manquant." }, { status: 400 });
+  if (!roomcode) {
+    return NextResponse.json({ error: "❌ Room code manquant." }, { status: 400 });
   }
 
   try {
     const room = await prisma.room.findUnique({
-      where: { id: roomId },
-      include: { players: true }, // 🔥 Inclut les joueurs dans la réponse
+      where: { id: roomcode }, // Utilisation de roomcode au lieu de roomId
+      include: { players: true },
     });
 
     if (!room) {
@@ -31,29 +31,27 @@ export async function GET(_: Request, { params }: { params: { roomId: string } }
 }
 
 /**
- * ✏️ Gestion de la méthode PATCH pour mettre à jour une room spécifique.
+ * ✏️ PATCH : Mettre à jour une room
  */
-export async function PATCH(req: Request, { params }: { params: { roomId: string } }) {
-  const { roomId } = params;
+export async function PATCH(req: Request, { params }: { params: { roomcode: string } }) {
+  const { roomcode } = params;
 
-  if (!roomId) {
-    return NextResponse.json({ error: "❌ Room ID manquant." }, { status: 400 });
+  if (!roomcode) {
+    return NextResponse.json({ error: "❌ Room code manquant." }, { status: 400 });
   }
 
   try {
     const body = await req.json();
 
-    // Vérifier si la room existe avant la mise à jour
-    const existingRoom = await prisma.room.findUnique({ where: { id: roomId } });
+    const existingRoom = await prisma.room.findUnique({ where: { id: roomcode } });
 
     if (!existingRoom) {
       return NextResponse.json({ error: "❌ Room introuvable." }, { status: 404 });
     }
 
-    // Mise à jour de la room
     const updatedRoom = await prisma.room.update({
-      where: { id: roomId },
-      data: body, // ✅ Assurez-vous que `body` contient des champs valides
+      where: { id: roomcode },
+      data: body,
     });
 
     return NextResponse.json(updatedRoom, { status: 200 });
@@ -64,25 +62,23 @@ export async function PATCH(req: Request, { params }: { params: { roomId: string
 }
 
 /**
- * 🗑️ Gestion de la méthode DELETE pour supprimer une room spécifique.
+ * 🗑️ DELETE : Supprimer une room
  */
-export async function DELETE(_: Request, { params }: { params: { roomId: string } }) {
-  const { roomId } = params;
+export async function DELETE(_: Request, { params }: { params: { roomcode: string } }) {
+  const { roomcode } = params;
 
-  if (!roomId) {
-    return NextResponse.json({ error: "❌ Room ID manquant." }, { status: 400 });
+  if (!roomcode) {
+    return NextResponse.json({ error: "❌ Room code manquant." }, { status: 400 });
   }
 
   try {
-    // Vérifier si la room existe avant la suppression
-    const existingRoom = await prisma.room.findUnique({ where: { id: roomId } });
+    const existingRoom = await prisma.room.findUnique({ where: { id: roomcode } });
 
     if (!existingRoom) {
       return NextResponse.json({ error: "❌ Room introuvable." }, { status: 404 });
     }
 
-    // Suppression de la room
-    await prisma.room.delete({ where: { id: roomId } });
+    await prisma.room.delete({ where: { id: roomcode } });
 
     return NextResponse.json({ message: "✅ Room supprimée avec succès." }, { status: 200 });
   } catch (error) {
