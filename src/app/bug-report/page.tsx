@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
+import Image from 'next/image';
 export default function BugReportPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -77,10 +77,11 @@ export default function BugReportPage() {
       <div className="relative h-full flex flex-col items-center justify-center">
         {/* Logo outside white box */}
         <div className="flex flex-col items-center mb-7">
-          <img
+          <Image
             src="./img/ICO_LOGO 1.png"
             alt="Logo ICO"
             className="w-60 h-auto"
+
           />
           <h1 className="text-white text-3xl font-bold">
             Signalez un bug pour améliorer ICO !
