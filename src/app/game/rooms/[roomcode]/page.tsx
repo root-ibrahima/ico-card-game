@@ -5,6 +5,7 @@ import { connectToRoom, disconnectSocket, sendMessageToRoom } from "@/lib/socket
 import { useRouter, usePathname } from "next/navigation";
 import { RoomEvent } from "@/types";
 import RoleDistribution from "./distribution-roles/page"; // Distribution des rôles
+import CaptainChoicePage from "./choix-capitaines/page"; // Page choix du capitaine
 import FooterGame from "./components/FooterGame"; // Footer dynamique
 import HeaderGame from "./components/HeaderGame"; // Header dynamique
 
@@ -19,6 +20,8 @@ const GameRoomPage: React.FC = () => {
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null); // Stockage du rôle
+  const [currentCaptain, setCurrentCaptain] = useState<string | null>(null); // Capitaine actuel
+  const [isCaptain, setIsCaptain] = useState<boolean>(false); // Si l'utilisateur est capitaine
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -64,7 +67,9 @@ const GameRoomPage: React.FC = () => {
   useEffect(() => {
     if (!username || !roomCode) return;
 
-    const handleRoomEvent = (data: RoomEvent & { role?: string; players?: Player[]; piratePoints?: number; marinPoints?: number; mancheGagnees?: number }) => {
+    const handleRoomEvent = (
+      data: RoomEvent & { role?: string; players?: Player[]; captain?: string; piratePoints?: number; marinPoints?: number; mancheGagnees?: number }
+    ) => {
       switch (data.type) {
         case "YOUR_ROLE":
           if (data.role) {
@@ -81,15 +86,22 @@ const GameRoomPage: React.FC = () => {
           setGameStarted(true); // La partie commence
           break;
 
+        case "CAPTAIN_SELECTED":
+          console.log(`👑 Nouveau capitaine désigné : ${data.captain}`);
+          setCurrentCaptain(data.captain || null);
+          setIsCaptain(data.captain === username); // Détermine si l'utilisateur est le capitaine
+          break;
+
         case "SCORE_UPDATE":
           if (data.piratePoints !== undefined) setPiratePoints(data.piratePoints);
           if (data.marinPoints !== undefined) setMarinPoints(data.marinPoints);
           if (data.mancheGagnees !== undefined) setMancheGagnees(data.mancheGagnees);
           break;
 
-          case "ALL_ROLES_CONFIRMED":
-
-            break;
+        case "ALL_ROLES_CONFIRMED":
+          console.log("🎉 Tous les rôles ont été confirmés !");
+          // Logique future pour passer à l'étape suivante, si nécessaire
+          break;
 
         default:
           console.warn("⚠️ Événement inattendu :", data);
@@ -125,13 +137,19 @@ const GameRoomPage: React.FC = () => {
       {/* Affichage conditionnel selon l'état de la partie */}
       {gameStarted ? (
         <>
-          {/* Affichage après le début de la partie */}
           <HeaderGame />
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
-            {/* Vérification si le rôle est défini */}
-            {role ? (
+            {/* Si un capitaine est défini, affiche la page choix-capitaine */}
+            {currentCaptain ? (
+              <CaptainChoicePage
+                isCaptain={isCaptain}
+                captainName={currentCaptain}
+                username={username || ""}
+                roomCode={roomCode || ""}
+              />
+            ) : role ? (
               <>
-              <RoleDistribution role={role} username={username} roomCode={roomCode} />
+                <RoleDistribution role={role} username={username || ""} roomCode={roomCode || ""} />
                 <button
                   onClick={confirmRole}
                   className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -152,7 +170,6 @@ const GameRoomPage: React.FC = () => {
         </>
       ) : (
         <>
-          {/* Affichage de la salle d'attente avant le début de la partie */}
           <div className="w-full bg-blue-600 text-white px-4 py-4 flex items-center justify-between fixed top-0">
             <button onClick={() => router.back()} className="font-medium">
               ⬅ Retour
@@ -190,7 +207,6 @@ const GameRoomPage: React.FC = () => {
               Les autres joueurs peuvent entrer ce code pour rejoindre la partie.
             </p>
 
-            {/* Bouton pour commencer la partie */}
             <button
               onClick={startGame}
               className="bg-white text-blue-600 font-bold py-3 px-6 rounded-full shadow-lg"

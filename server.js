@@ -108,8 +108,14 @@ wss.on("connection", (ws) => {
         const allConfirmed = room.every((p) => p.roleConfirmed);
         if (allConfirmed) {
           console.log(`🎉 Tous les joueurs ont confirmé leurs rôles dans la salle ${roomCode}`);
-          broadcast(roomCode, { type: "ALL_ROLES_CONFIRMED" });
+          assignCaptain(roomCode); // Nouveau : Passe au choix du capitaine
         }
+      }
+
+      // Gestion du capitaine sélectionné
+      if (type === "CAPTAIN_ACTION_CONFIRMED" && roomCode) {
+        console.log(`✅ Le capitaine a confirmé son action pour la salle ${roomCode}`);
+        broadcast(roomCode, { type: "NEXT_PHASE" }); // Passe à l'étape suivante
       }
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);
@@ -168,6 +174,35 @@ function assignRoles(roomCode) {
   });
 
   console.log(`🎭 Rôles attribués avec succès dans la salle ${roomCode}`);
+}
+
+/**
+ * 📡 Sélectionne un capitaine pour la salle
+ */
+function assignCaptain(roomCode) {
+  const room = rooms[roomCode];
+  if (!room || room.length === 0) {
+    console.error(`❌ Pas de joueurs dans la salle ${roomCode}`);
+    return;
+  }
+
+  if (!room.currentCaptainIndex) {
+    room.currentCaptainIndex = 0; // Commence avec le premier joueur
+  } else {
+    room.currentCaptainIndex = (room.currentCaptainIndex + 1) % room.length; // Boucle circulaire
+  }
+
+  const currentCaptain = room[room.currentCaptainIndex];
+  room.currentCaptain = currentCaptain.username;
+
+  console.log(`👑 Nouveau capitaine : ${currentCaptain.username}`);
+  broadcast(roomCode, {
+    type: "CAPTAIN_SELECTED",
+    captain: currentCaptain.username,
+    avatar: currentCaptain.avatar,
+  });
+  console.log(`📤 Envoi de l'événement "CAPTAIN_SELECTED" pour la salle ${roomCode}`);
+
 }
 
 /**
