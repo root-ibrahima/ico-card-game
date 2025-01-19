@@ -14,19 +14,19 @@ wss.on("connection", (ws) => {
     try {
       const data = JSON.parse(message);
       console.log("📩 Message reçu du client :", data);
-
+  
       let { type, roomCode, username, avatar, createNewRoom, selectedCrew } = data;
-
+  
       if (!username) {
         console.error("❌ Erreur : username est undefined !");
         return;
       }
-
+  
       if (!avatar) {
         console.warn("⚠️ Aucun avatar fourni, génération automatique...");
         avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`;
       }
-
+  
       // Gestion de la connexion à une salle
       if (type === "JOIN_ROOM") {
         if (roomCode) {
@@ -46,20 +46,20 @@ wss.on("connection", (ws) => {
             rooms[roomCode] = [];
           }
         }
-
+  
         if (!rooms[roomCode]) {
           console.error(`❌ Erreur : La salle ${roomCode} n'a pas pu être créée.`);
           return;
         }
-
+  
         const playerIndex = rooms[roomCode].findIndex((p) => p.username === username);
-
+  
         if (playerIndex === -1) {
           rooms[roomCode].push({ ws, username, avatar, roleConfirmed: false });
         } else {
           console.log(`⚠️ ${username} est déjà dans la salle ${roomCode}`);
         }
-
+  
         console.log(`👥 ${username} a rejoint la salle ${roomCode}`);
         const playersList = rooms[roomCode].map(({ username, avatar }) => ({
           username,
@@ -67,26 +67,26 @@ wss.on("connection", (ws) => {
         }));
         broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
       }
-
+  
       // Début de la partie
       if (type === "GAME_START" && roomCode) {
         console.log(`🎮 La partie dans la salle ${roomCode} commence !`);
-
+  
         if (!rooms[roomCode] || rooms[roomCode].length === 0) {
           console.error(`❌ Impossible de démarrer la partie : la salle ${roomCode} est vide.`);
           return;
         }
-
+  
         const playersList = rooms[roomCode].map(({ username, avatar }) => ({
           username,
           avatar,
         }));
         broadcast(roomCode, { type: "GAME_START", players: playersList });
-
+  
         console.log(`🚀 Partie démarrée pour la salle ${roomCode} avec les joueurs :`, playersList);
         assignRoles(roomCode);
       }
-
+  
       // Confirmation du rôle par le joueur
       if (type === "ROLE_CONFIRMED" && roomCode) {
         const room = rooms[roomCode];
@@ -94,16 +94,16 @@ wss.on("connection", (ws) => {
           console.error(`❌ Salle introuvable : ${roomCode}`);
           return;
         }
-
+  
         const player = room.find((p) => p.username === username);
         if (!player) {
           console.error(`❌ Joueur introuvable dans la salle ${roomCode} : ${username}`);
           return;
         }
-
+  
         player.roleConfirmed = true;
         console.log(`✅ ${username} a confirmé son rôle dans la salle ${roomCode}`);
-
+  
         // Vérifie si tous les joueurs ont confirmé leur rôle
         const allConfirmed = room.every((p) => p.roleConfirmed);
         if (allConfirmed) {
@@ -111,45 +111,50 @@ wss.on("connection", (ws) => {
           assignCaptain(roomCode); // Nouveau : Passe au choix du capitaine
         }
       }
-
+  
       // Gestion du capitaine sélectionné
       if (type === "CAPTAIN_ACTION_CONFIRMED" && roomCode) {
         console.log(`✅ Le capitaine a confirmé son action pour la salle ${roomCode}`);
-
+  
         const room = rooms[roomCode];
         if (!room) {
           console.error(`❌ Salle introuvable : ${roomCode}`);
           return;
         }
-
+  
         const captain = room.find((p) => p.username === username);
         if (!captain) {
           console.error(`❌ Capitaine introuvable : ${username}`);
           return;
         }
-
+  
         broadcast(roomCode, { type: "CREW_SELECTION_PHASE", captain: captain.username });
         console.log(`📤 Phase de sélection d'équipage commencée pour la salle ${roomCode}`);
       }
-
+  
       // Gestion de la sélection de l'équipage
       console.log("📩 Roomcode :", roomCode);
       console.log("📩 Type :", type);
+  
       if (type === "CREW_SELECTED" && roomCode) {
         console.log(`📤 Équipage sélectionné pour la salle ${roomCode}:`, selectedCrew);
-      
+  
+        if (!rooms[roomCode]) {
+          console.error(`❌ Salle introuvable : ${roomCode}`);
+          return;
+        }
+  
         // Diffuser un ROOM_UPDATE si nécessaire pour synchroniser la liste des joueurs
         const playersList = rooms[roomCode].map(({ username, avatar }) => ({
           username,
           avatar,
         }));
         broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
-      
+  
         // Diffuser CREW_SELECTED
         broadcast(roomCode, { type: "CREW_SELECTED", selectedCrew });
       }
-      
-
+  
       // Gestion du vote d'équipage
       if (type === "VOTE_CREW" && roomCode) {
         const room = rooms[roomCode];
@@ -157,29 +162,29 @@ wss.on("connection", (ws) => {
           console.error(`❌ Salle introuvable : ${roomCode}`);
           return;
         }
-
+  
         const player = room.find((p) => p.username === username);
         if (!player) {
           console.error(`❌ Joueur introuvable dans la salle ${roomCode} : ${username}`);
           return;
         }
-
+  
         // Ajout du vote de l'utilisateur
         player.vote = data.vote; // "yes" ou "no"
         console.log(`🗳️ Vote reçu : ${username} a voté "${data.vote}"`);
-
+  
         // Vérifie si tous les joueurs non membres de l'équipage ont voté
         const allVoted = room
-          .filter((p) => !data.selectedCrew.includes(p.username)) // Exclure les membres de l'équipage
+          .filter((p) => !selectedCrew.includes(p.username)) // Exclure les membres de l'équipage
           .every((p) => p.vote !== undefined);
-
+  
         if (allVoted) {
           // Compte des votes
           const votesYes = room.filter((p) => p.vote === "yes").length;
           const votesNo = room.filter((p) => p.vote === "no").length;
-
+  
           console.log(`✅ Résultats du vote : Oui = ${votesYes}, Non = ${votesNo}`);
-
+  
           // Diffuser les résultats à tous les joueurs
           broadcast(roomCode, {
             type: "VOTE_RESULTS",
@@ -187,7 +192,7 @@ wss.on("connection", (ws) => {
             votesNo,
             approved: votesYes > votesNo, // Approuvé si "yes" est majoritaire
           });
-
+  
           // Réinitialiser les votes pour la prochaine phase
           room.forEach((p) => delete p.vote);
         }
@@ -196,6 +201,7 @@ wss.on("connection", (ws) => {
       console.error("❌ Erreur WebSocket :", error);
     }
   });
+  
 
   ws.on("close", () => {
     console.log("🔴 Client déconnecté");

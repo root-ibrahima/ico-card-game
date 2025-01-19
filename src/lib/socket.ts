@@ -100,6 +100,8 @@ export const sendMessageToRoom = (
         ...additionalData,
       };
 
+      console.log("📤 Message envoyé :", message);
+
       socket.send(JSON.stringify(message));
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi du message :", error);
