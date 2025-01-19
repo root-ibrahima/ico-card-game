@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isNoFooterRoute = pathname.startsWith("/game") || pathname === "/signin";
+  const isNoFooterRoute = pathname.startsWith("/game") || pathname === "/signin" || pathname === "/register" || pathname === "/dashboard";
 
   return (
     <html lang="fr">
