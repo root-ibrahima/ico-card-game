@@ -14,6 +14,7 @@ interface PlayerCardProps {
   isCrewMember?: boolean; // Indique si le joueur est un membre d'équipage
   isSelected?: boolean; // Indique si le joueur est sélectionné
   selectionNumber?: number; // Position du joueur dans la sélection
+  voters?: Player[]; // Liste des joueurs ayant voté
 }
 
 const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -22,6 +23,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   isCrewMember = false,
   isSelected = false,
   selectionNumber,
+  
 }) => {
   return (
     <div

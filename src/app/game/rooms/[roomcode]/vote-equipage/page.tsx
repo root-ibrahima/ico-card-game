@@ -39,9 +39,6 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
   const isCaptain = currentUser === captain.username;
   const isCrewMember = crewMembers.includes(currentUser);
 
-  const voters = allPlayers.filter(
-    (player) => !crewMembers.includes(player.username)
-  );
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
