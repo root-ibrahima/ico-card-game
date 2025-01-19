@@ -23,14 +23,11 @@ const Profile = () => {
           console.log("Debug: User authenticated:", userData);
           setUser(userData);
         } else {
-          console.log(
-            "Debug: User not authenticated. Redirecting to /auth/signin."
-          );
-          router.push("/auth/signin?redirect=/profile");
+          router.push("/signin?redirect=/profile");
         }
       } catch (error) {
         console.error("Debug: Error during authentication check:", error);
-        router.push("/auth/signin?redirect=/profile");
+        router.push("/signin?redirect=/profile");
       } finally {
         setLoading(false); // Fin du chargement
       }

@@ -19,7 +19,6 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(data.user, { status: 200 });
     } catch (error) {
-        console.error("Debug: Error in /api/auth/user:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

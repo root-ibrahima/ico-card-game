@@ -18,7 +18,7 @@ function EditProfilePageContent() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+      router.push('/signin');
     } else if (status === 'authenticated' && session?.user) {
       setName(session.user.name || '');
       setEmail(session.user.email || '');
