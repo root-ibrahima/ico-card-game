@@ -5,22 +5,24 @@ import { useState, useEffect } from 'react';
 export default function BugReportPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState(''); // Nouveau champ "Objet"
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('low');
   const [statusMessage, setStatusMessage] = useState('');
-  const [statusType, setStatusType] = useState<'success' | 'error' | null>(null); // Ajout d'un type de message
+  const [statusType, setStatusType] = useState<'success' | 'error' | null>(null); // Message de statut
   const [loading, setLoading] = useState(true);
 
+  // Récupérer les informations utilisateur pour pré-remplir le champ email
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await fetch('/api/auth/user');
         if (response.ok) {
           const userData = await response.json();
-          setEmail(userData.email);
+          setEmail(userData.email); // Pré-remplir l'email avec celui de l'utilisateur connecté
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération de l'utilisateur :", error);
+        console.error('Erreur lors de la récupération de l’utilisateur :', error);
       } finally {
         setLoading(false);
       }
@@ -29,12 +31,13 @@ export default function BugReportPage() {
     fetchUser();
   }, []);
 
+  // Gestion de la soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatusMessage('');
     setStatusType(null);
 
-    const bugReport = { name, email, description, priority };
+    const bugReport = { name, email, subject, description, priority };
 
     try {
       const response = await fetch('/api/bug-report', {
@@ -45,18 +48,19 @@ export default function BugReportPage() {
 
       if (response.ok) {
         setStatusMessage('Merci ! Votre rapport de bug a été envoyé.');
-        setStatusType('success'); // Définit le type comme succès
+        setStatusType('success'); // Message de succès
         setName('');
+        setSubject('');
         setDescription('');
         setPriority('low');
       } else {
         setStatusMessage('Une erreur est survenue. Veuillez réessayer.');
-        setStatusType('error'); // Définit le type comme erreur
+        setStatusType('error'); // Message d'erreur
       }
     } catch (error) {
-      console.error("Erreur lors de l'envoi du rapport de bug :", error);
+      console.error('Erreur lors de l\'envoi du rapport de bug :', error);
       setStatusMessage('Erreur interne. Veuillez réessayer plus tard.');
-      setStatusType('error'); // Définit le type comme erreur
+      setStatusType('error'); // Message d'erreur
     }
   };
 
@@ -110,6 +114,7 @@ export default function BugReportPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit}>
+            {/* Nom ou pseudo */}
             <div className="mb-4">
               <label
                 className="block text-gray-600 text-sm mb-2"
@@ -128,12 +133,11 @@ export default function BugReportPage() {
                   placeholder="Votre nom ou pseudo"
                   required
                 />
-                <span className="absolute left-3 top-3 text-gray-400">
-                  👤
-                </span>
+                <span className="absolute left-3 top-3 text-gray-400">👤</span>
               </div>
             </div>
 
+            {/* Adresse e-mail */}
             <div className="mb-4">
               <label
                 className="block text-gray-600 text-sm mb-2"
@@ -152,12 +156,35 @@ export default function BugReportPage() {
                   placeholder="Votre adresse e-mail"
                   required
                 />
-                <span className="absolute left-3 top-3 text-gray-400">
-                  📧
-                </span>
+                <span className="absolute left-3 top-3 text-gray-400">📧</span>
               </div>
             </div>
 
+            {/* Objet (sujet) */}
+            <div className="mb-4">
+              <label
+                className="block text-gray-600 text-sm mb-2"
+                htmlFor="subject"
+              >
+                Objet (max. 50 caractères)
+              </label>
+              <div className="relative">
+                <input
+                  id="subject"
+                  name="subject"
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  maxLength={50} // Limite côté formulaire
+                  className="w-full border border-gray-300 rounded-lg p-3 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Sujet du bug"
+                  required
+                />
+                <span className="absolute left-3 top-3 text-gray-400">📌</span>
+              </div>
+            </div>
+
+            {/* Description du bug */}
             <div className="mb-4">
               <label
                 className="block text-gray-600 text-sm mb-2"
@@ -176,6 +203,7 @@ export default function BugReportPage() {
               />
             </div>
 
+            {/* Priorité */}
             <div className="mb-4">
               <label
                 className="block text-gray-600 text-sm mb-2"
