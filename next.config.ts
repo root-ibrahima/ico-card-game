@@ -5,8 +5,14 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const nextConfig: NextConfig = {
+  reactStrictMode: true, // Active le mode strict de React
+
+  images: {
+    domains: ["api.dicebear.com"], // ✅ Autorise les images externes depuis Dicebear
+  },
+
   env: {
-    EMAIL_APP_PASSWORD: process.env.EMAIL_APP_PASSWORD, // Ajoute la variable ici
+    NEXT_PUBLIC_EMAIL_APP_PASSWORD: process.env.EMAIL_APP_PASSWORD, // ✅ Ajout pour le client
   },
 };
 
