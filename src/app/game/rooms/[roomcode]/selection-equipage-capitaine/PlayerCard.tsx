@@ -1,5 +1,5 @@
 import React from "react";
-
+import Image from "next/image";
 interface PlayerCardProps {
   player: { username: string; avatar: string };
   isSelected: boolean;
@@ -20,7 +20,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         isSelected ? "bg-blue-200" : "bg-white"
       }`}
     >
-      <img
+      <Image
         src={player.avatar}
         alt={player.username}
         className="w-20 h-20 object-cover rounded-full mx-auto mb-2"

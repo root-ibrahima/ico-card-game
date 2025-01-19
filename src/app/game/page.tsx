@@ -35,7 +35,7 @@ const RoleDistribution = () => {
         {/* Image du rôle */}
         <div className="w-48 h-48 mb-8">
           <Image
-            src={`/cartes/bonus/Carte-${card}.png`} alt={card} // Image basée sur le rôle
+            src={`/cartes/bonus/Carte-${role}.png`} // Image basée sur le rôle
             alt={role}
             width={192}
             height={192}

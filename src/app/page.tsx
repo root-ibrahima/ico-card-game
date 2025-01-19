@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation"; // Utilisé pour l'App Router
 import { useGame } from "@/context/GameContext"; // Conserve l'utilisation du contexte si pertinent.
 
@@ -12,7 +13,7 @@ const Home: React.FC = () => {
   const [roomCode, setRoomCode] = useState<string>(""); // Code de la salle
   const [user, setUser] = useState<User | null>(null); // Stocke les données utilisateur
   const [loading, setLoading] = useState<boolean>(true); // Indique le chargement
-  const { dispatch } = useGame(); // Si le contexte est utile
+  const {} = useGame(); // Si le contexte est utile
   const router = useRouter();
 
   // Vérification de l'utilisateur connecté
@@ -127,8 +128,8 @@ const Home: React.FC = () => {
               "Perroquet",
               "Troc",
             ].map((card) => (
-              <div key={card} className="flex-shrink-0 w-40 p-4 bg-gray-100 shadow rounded-md text-center">
-                <img src={`/cartes/bonus/Carte-${card}.png`} alt={card} className="w-full h-32 object-contain mb-2" />
+              <div key={card} className="flex-shrink-0 w-60 p-4 bg-gray-100 shadow rounded-md text-center">
+                <Image src={`/cartes/bonus/Carte-${card}.png`} alt={card} width={160} height={128} className="w-full h-32 object-contain mb-2" />
                 <h4 className="font-bold">{card.replace(/_/g, " ")}</h4>
               </div>
             ))}

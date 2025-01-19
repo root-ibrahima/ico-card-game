@@ -3,12 +3,16 @@
  */
 export interface Player {
   id: string;
-  name: string;
+  username: string;
   role: "marin" | "pirate" | "sirene" | "captain"; 
   avatar: string;
   isCaptain: boolean;
   roomCode: string;
+  piratePoints?: number;
+  marinPoints?: number;
+  mancheGagnees?: number;
 }
+
 /**
  * Interface représentant une salle de jeu.
  */
@@ -17,6 +21,7 @@ export interface Room {
   players: Player[];
   status: "waiting" | "in-progress" | "finished";
 }
+
 /**
  * Événements possibles dans le WebSocket.
  */
@@ -29,8 +34,15 @@ export type RoomEventType =
   | "YOUR_ROLE"
   | "VOTE_RESULTS"
   | "CREW_SELECTED"
+  | "CREW_SELECTION_PHASE"
+  | "CAPTAIN_SELECTED"
+  | "CAPTAIN_CHANGE"
+  | "ACTION_SELECTION" 
+  | "ACTION_RESULTS"
+  | "ROLE_CONFIRMED" 
   | "VOTE_RESULTS"
-  | "CAPTAIN_SELECTED"; 
+  | "SIRENE_VOTE_UPDATE"
+  | "SIRENE_IDENTIFIED";
 
 /**
  * Interface représentant un événement WebSocket.
@@ -45,5 +57,43 @@ export interface RoomEvent {
     votesYes?: number;
     votesNo?: number;
     approved?: boolean;
+    newCaptain?: string;
+    actions?: { name: string; action: string }[];
+    votes?: { [playerId: string]: number };
+    identifiedSirene?: string;
   };
+}
+
+export interface FooterGameProps {
+  role?: string | null; 
+  piratePoints: number; 
+  marinPoints: number; 
+  mancheGagnees: number;
+  captain: string | null;
+  isCaptain: boolean;
+  roomCode: string;
+  username: string;
+  players: Player[];
+  gameStarted: boolean;
+  crewSelectionPhase: boolean;
+  crewMembers: Player[];
+  votePhase: boolean;
+  currentCaptain: string | null;
+  startGame: () => void;
+  confirmRole: () => void;
+  handleVote: (vote: "yes" | "no") => void;
+  handleAction: (action: string) => void;
+  handleCaptainChange: (newCaptain: string) => void;
+  handleRoleConfirmed: () => void;
+  handleVoteResults: () => void;
+  handleActionResults: () => void;
+  handleCrewSelected: () => void;
+  handleCaptainSelected: () => void;
+  handleCrewSelectionPhase: () => void;
+  handleGameStart: () => void;
+  handleRoomUpdate: (players: Player[]) => void;
+  handlePlayerLeft: (player: Player) => void;
+  handleNewMessage: (message: string) => void;
+  handlePlayerJoined: (player: Player) => void;
+  handleRoleReceived: (role: string) => void;
 }

@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { connectToRoom, disconnectSocket, sendMessageToRoom } from "@/lib/socket";
 import { useRouter, usePathname } from "next/navigation";
 import { RoomEvent } from "@/types";
 import RoleDistribution from "./distribution-roles/page";
 import CaptainChoicePage from "./choix-capitaines/page";
 import SelectCrewPage from "./selection-equipage-capitaine/page";
-import VoteCrewPage from "./vote-equipage/page"; // Nouvelle page pour voter
+import VoteCrewPage from "./vote-equipage/page";
 import FooterGame from "./components/FooterGame";
 import HeaderGame from "./components/HeaderGame";
 
 interface Player {
   username: string;
   avatar: string;
+  bio?: string;
+  score?: number;
 }
 
 const GameRoomPage: React.FC = () => {
@@ -28,11 +31,7 @@ const GameRoomPage: React.FC = () => {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [crewSelectionPhase, setCrewSelectionPhase] = useState<boolean>(false);
   const [votePhase, setVotePhase] = useState<boolean>(false);
-  const [crewMembers, setCrewMembers] = useState<Player[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [piratePoints, setPiratePoints] = useState<number>(0);
-  const [marinPoints, setMarinPoints] = useState<number>(0);
-  const [mancheGagnees, setMancheGagnees] = useState<number>(0);
 
   useEffect(() => {
     const segments = pathname.split("/");
@@ -73,70 +72,54 @@ const GameRoomPage: React.FC = () => {
         role?: string;
         players?: Player[];
         captain?: string;
-        selectedCrew?: Player[];
-        piratePoints?: number;
-        marinPoints?: number;
-        mancheGagnees?: number;
+        selectedCrew?: string[];
       }
     ) => {
       console.log("📩 Message reçu :", data);
 
       switch (data.type) {
         case "YOUR_ROLE":
-          if (data.role) {
-            setRole(data.role);
-          }
+          if (data.role) setRole(data.role);
           break;
-
-          case "ROOM_UPDATE":
-          if (data.players) {
-            console.log("📩 ROOM_UPDATE reçu :", data.players);
-            setPlayers(data.players);
-          }
+        case "ROOM_UPDATE":
+          if (data.players) setPlayers(data.players);
           break;
-
         case "GAME_START":
           setGameStarted(true);
           break;
-
         case "CAPTAIN_SELECTED":
           setCurrentCaptain(data.captain || null);
           setIsCaptain(data.captain === username);
           break;
-
         case "CREW_SELECTION_PHASE":
           setCrewSelectionPhase(true);
-          console.log("🚀 Phase de sélection d'équipage activée !");
           break;
+        case "CREW_SELECTED":
+          if (data.selectedCrew) {
 
-          case "CREW_SELECTED":
-            if (data.selectedCrew) {
-              console.log("📩 CREW_SELECTED reçu :", data.selectedCrew);
-          
-              setTimeout(() => {
-                const selectedPlayers = players.filter((player) =>
-                  data.selectedCrew.includes(player.username)
-                );
-                console.log("✅ Membres sélectionnés :", selectedPlayers);
-          
-                setCrewMembers(selectedPlayers);
-                setCrewSelectionPhase(false);
-                setVotePhase(true);
-              }, 100); // 100ms pour garantir la synchronisation
-            }
-            break;
-          
-          
-          
-          
-
-          
-
+            setCrewMembers(data.selectedCrew);
+            setCrewSelectionPhase(false);
+            setVotePhase(true);
+          }
+          break;
         case "VOTE_RESULTS":
-          console.log("✅ Résultats du vote reçus :", data);
           setVotePhase(false);
-          break;
+          setVoteResult(data.approved || false);
 
+          // Si accepté, avancer à la prochaine étape après 3 secondes
+          if (data.approved) {
+            setTimeout(() => {
+              setVoteResult(null); // Réinitialiser
+              // Avancer à l'étape suivante
+            }, 3000);
+          } else {
+            // Si rejeté, relancer la phase de sélection
+            setTimeout(() => {
+              setVoteResult(null);
+              setCrewSelectionPhase(true);
+            }, 3000);
+          }
+          break;
         default:
           console.warn("⚠️ Événement inattendu :", data);
       }
@@ -150,21 +133,17 @@ const GameRoomPage: React.FC = () => {
   }, [username, roomCode]);
 
   const startGame = () => {
-    if (roomCode) {
+    if (username && roomCode) {
       sendMessageToRoom(username, roomCode, "GAME_START");
     }
   };
 
   const confirmRole = () => {
-    if (roomCode && username) {
+    if (username && roomCode) {
       sendMessageToRoom(username, roomCode, "ROLE_CONFIRMED");
     }
   };
 
-  console.log("🎥 Données transmises à VoteCrewPage :", {
-    captain: players.find((p) => p.username === currentCaptain),
-    crewMembers,
-  });
 
   if (loading) return <p className="text-white">Chargement...</p>;
   if (!username) return <p className="text-white">Non connecté</p>;
@@ -175,24 +154,18 @@ const GameRoomPage: React.FC = () => {
         <>
           <HeaderGame />
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
-            {crewSelectionPhase && isCaptain ? (
-              <SelectCrewPage
-                players={players.filter((p) => p.username !== username)}
-                roomCode={roomCode || ""}
-                username={username || ""}
-              />
             ) : crewSelectionPhase ? (
               <p className="text-center text-gray-600">
                 En attente que le capitaine sélectionne son équipage...
               </p>
             ) : votePhase ? (
               <VoteCrewPage
-              currentUser={username || ""}
-              roomCode={roomCode || ""}
-              captain={players.find((p) => p.username === currentCaptain) || { username: "", avatar: "" }}
-              crewMembers={crewMembers} // Cette liste doit contenir les objets complets
-            />
-
+                currentUser={username || ""}
+                roomCode={roomCode || ""}
+                captain={players.find((p) => p.username === currentCaptain) || { username: "", avatar: "" }}
+                crewMembers={crewMembers}
+                allPlayers={players}
+              />
             ) : currentCaptain ? (
               <CaptainChoicePage
                 isCaptain={isCaptain}
@@ -207,14 +180,17 @@ const GameRoomPage: React.FC = () => {
                   onClick={confirmRole}
                   className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  J'ai compris mon rôle
+                  J&apos;ai compris mon rôle
                 </button>
               </>
             ) : (
-              <p className="text-center text-gray-500">Chargement de votre rôle...</p>
+              <>
+                <p className="text-center text-gray-500">Chargement de votre rôle...</p>
+                <FooterGame role={role || undefined} piratePoints={0} marinPoints={0} mancheGagnees={0} />
+              </>
             )}
           </main>
-          <FooterGame />
+          <FooterGame role={role || undefined} piratePoints={0} marinPoints={0} mancheGagnees={0} />
         </>
       ) : (
         <>
@@ -238,9 +214,11 @@ const GameRoomPage: React.FC = () => {
                   key={index}
                   className="bg-white text-black rounded-lg p-3 flex flex-col items-center shadow-md"
                 >
-                  <img
+                  <Image
                     src={player.avatar}
                     alt={player.username}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-full mb-2"
                   />
                   <p className={`text-sm font-semibold ${username === player.username ? "text-blue-600" : ""}`}>

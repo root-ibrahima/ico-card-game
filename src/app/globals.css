@@ -18,3 +18,21 @@ body {
   @apply bg-background-light text-foreground-light dark:bg-background-dark dark:text-foreground-dark transition-colors duration-500;
   font-family: 'Inter', Arial, Helvetica, sans-serif;
 }
+
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 400ms;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 400ms;
+}

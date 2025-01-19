@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface Player {
   username: string; // Identifiant unique
@@ -13,6 +14,7 @@ interface PlayerCardProps {
   isCrewMember?: boolean; // Indique si le joueur est un membre d'équipage
   isSelected?: boolean; // Indique si le joueur est sélectionné
   selectionNumber?: number; // Position du joueur dans la sélection
+  voters?: Player[]; // Liste des joueurs ayant voté
 }
 
 const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -21,6 +23,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   isCrewMember = false,
   isSelected = false,
   selectionNumber,
+  
 }) => {
   return (
     <div
@@ -29,10 +32,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       }`}
     >
       {/* Avatar du joueur */}
-      <img
+      <Image
         src={player.avatar}
         alt={player.username}
-        className="w-20 h-20 object-cover rounded-full mx-auto mb-2"
+        width={80}
+        height={80}
+        className="object-cover rounded-full mx-auto mb-2"
       />
 
       {/* Nom du joueur */}

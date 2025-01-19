@@ -1,40 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sidebare } from "../../components/DashboardComponents/Sidebare";
+import UserTable from "../../components/DashboardComponents/UserTable";
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<any | null>(null);
+interface User {
+  email: string;
+  // Ajoute d'autres propriétés utilisateur si nécessaire
+}
+
+const Dashboard: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const response = await fetch("/api/auth/user");
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-      } else {
-        // Redirect to signin if user is not authenticated
-        router.push("/signin");
+      try {
+        const response = await fetch("/api/auth/user");
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data);
+        } else {
+          // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
+          router.push("/signin");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération de l'utilisateur :", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchUser();
   }, [router]);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <p>Chargement...</p>;
   }
 
   if (!user) {
-    return null; // Redirection handled by useEffect
+    return null; // Redirection gérée par useEffect
   }
 
   return (
-    <div>
-      <h1>Welcome to your Dashboard, {user.email}!</h1>
+    <div className="flex">
+      <Sidebare />
+      <div className="flex-1 p-4">
+        <h1 className="text-2xl mb-4">Gestion des Utilisateurs</h1>
+        <UserTable />
+      </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

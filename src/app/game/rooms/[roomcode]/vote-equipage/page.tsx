@@ -13,7 +13,8 @@ interface VoteCrewPageProps {
   currentUser: string;
   roomCode: string;
   captain: Player;
-  crewMembers: Player[];
+  crewMembers: string[]; // Only usernames
+  allPlayers: Player[]; // Full player objects
 }
 
 const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
@@ -21,36 +22,38 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
   roomCode,
   captain,
   crewMembers,
+  allPlayers,
 }) => {
   const [vote, setVote] = useState<"yes" | "no" | null>(null);
-  console.log("🎥 Données reçues dans VoteCrewPage :", { captain, crewMembers });
+
+  // Map usernames in `crewMembers` to full `Player` objects
+  const crewMemberObjects = crewMembers
+    .map((username) => allPlayers.find((player) => player.username === username))
+    .filter((player): player is Player => !!player); // Remove undefined entries
 
   const handleVote = (userVote: "yes" | "no") => {
     setVote(userVote);
-
     sendMessageToRoom(currentUser, roomCode, "VOTE_CREW", { vote: userVote });
   };
 
   const isCaptain = currentUser === captain.username;
-  const isCrewMember = crewMembers.some((member) => member.username === currentUser);
-
-  console.log("🎥 Données reçues dans VoteCrewPage :", { captain, crewMembers });
+  const isCrewMember = crewMembers.includes(currentUser);
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
       <main className="flex-grow px-4 flex flex-col items-center text-center mt-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Au vote !</h1>
-        <p className="text-base text-gray-600 mb-12">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Votez pour l'équipage</h1>
+        <p className="text-base text-gray-600 mb-8">
           Voici les membres de l’équipage proposés par le capitaine.
         </p>
 
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center mb-8">
           <PlayerCard player={captain} isCaptain={true} />
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-10">
-          {crewMembers.map((member) => (
-            <PlayerCard key={member.username} player={member} />
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          {crewMemberObjects.map((member) => (
+            <PlayerCard key={member.username} player={member} isCrewMember={true} />
           ))}
         </div>
 
@@ -65,21 +68,19 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
             }`}
           >
             <p className="text-lg font-bold mb-2">Acceptez-vous cet équipage ?</p>
-            <p className="text-sm mb-6">3/5 votes</p>
-
             {!vote ? (
               <div className="flex justify-around">
                 <button
                   onClick={() => handleVote("yes")}
                   className="bg-white text-green-500 font-bold py-2 px-6 rounded-full hover:bg-green-100"
                 >
-                  ✅
+                  ✅ Oui
                 </button>
                 <button
                   onClick={() => handleVote("no")}
                   className="bg-white text-red-500 font-bold py-2 px-6 rounded-full hover:bg-red-100"
                 >
-                  ❌
+                  ❌ Non
                 </button>
               </div>
             ) : (
@@ -91,7 +92,9 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
         ) : (
           <div className="w-full max-w-md rounded-lg p-6 text-white text-center bg-blue-500">
             <p className="text-lg font-bold">Les joueurs votent...</p>
-            <p className="text-sm mt-2">3/5 votes</p>
+            <p className="text-sm mt-2">
+              Vous ne pouvez pas voter, attendez les autres joueurs.
+            </p>
           </div>
         )}
       </main>
