@@ -4,12 +4,11 @@
 export interface Player {
   id: string;
   name: string;
-  role: "marin" | "pirate" | "sirene" | "captain"; // Ajout des rôles de jeu
-  avatar: string; // Ajout pour la gestion des avatars
-  isCaptain: boolean; // Détermine si le joueur est le narrateur
-  roomCode: string; // Permet d'identifier dans quelle room est le joueur
+  role: "marin" | "pirate" | "sirene" | "captain"; 
+  avatar: string;
+  isCaptain: boolean;
+  roomCode: string;
 }
-
 /**
  * Interface représentant une salle de jeu.
  */
@@ -18,7 +17,6 @@ export interface Room {
   players: Player[];
   status: "waiting" | "in-progress" | "finished";
 }
-
 /**
  * Événements possibles dans le WebSocket.
  */
@@ -28,7 +26,11 @@ export type RoomEventType =
   | "PLAYER_LEFT"
   | "NEW_MESSAGE"
   | "GAME_START"
-  | "YOUR_ROLE"; // Ajout de YOUR_ROLE pour informer chaque joueur de son rôle
+  | "YOUR_ROLE"
+  | "VOTE_RESULTS"
+  | "CREW_SELECTED"
+  | "VOTE_RESULTS"
+  | "CAPTAIN_SELECTED"; 
 
 /**
  * Interface représentant un événement WebSocket.
@@ -36,12 +38,12 @@ export type RoomEventType =
 export interface RoomEvent {
   type: RoomEventType;
   payload: {
-    roomCode?: string; // Code de la salle
-    message?: string; // Message envoyé
-    username?: string; // Pseudo du joueur concerné
-    players?: Player[]; // Liste complète des joueurs mis à jour
-    role?: string; // Rôle attribué à un joueur spécifique
-    isCaptain?: boolean; // Information si un joueur est le capitaine
-    [key: string]: unknown; // Permet d'ajouter d'autres clés si nécessaire
+    roomCode?: string;
+    message?: string;
+    player?: Player;
+    selectedCrew?: Player[];
+    votesYes?: number;
+    votesNo?: number;
+    approved?: boolean;
   };
 }
