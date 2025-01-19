@@ -188,76 +188,83 @@ wss.on("connection", (ws) => {
       }
   
       // Gestion du vote d'équipage
-      if (type === "VOTE_CREW" && roomCode) {
-        console.log(`📩 [VOTE_CREW] Reçu pour la salle ${roomCode} de la part de ${username}`);
-      
-        const room = rooms[roomCode];
-        if (!room) {
-          console.error(`❌ [VOTE_CREW] Salle introuvable : ${roomCode}`);
-          return;
-        }
-      
-        const player = room.players.find((p) => p.username === username);
-        if (!player) {
-          console.error(`❌ [VOTE_CREW] Joueur introuvable dans la salle ${roomCode} : ${username}`);
-          return;
-        }
-      
-        // Ajout du vote de l'utilisateur
-        player.vote = data.vote; // "yes" ou "no"
-        console.log(`🗳️ [VOTE_CREW] Vote reçu : ${username} a voté "${data.vote}" dans la salle ${roomCode}`);
-      
-        // Vérifie si tous les joueurs non membres de l'équipage ont voté
-        const totalPlayers = room.players.length;
-        const votesReceived = room.players.filter((p) => p.vote !== undefined).length;
-        const allVoted = votesReceived === totalPlayers;
-      
-        if (allVoted) {
-          console.log(`✅ [VOTE_CREW] Tous les votes nécessaires ont été reçus dans la salle ${roomCode}`);
-      
-          // Compte des votes
-          const votesYes = room.players.filter((p) => p.vote === "yes").length;
-          const votesNo = room.players.filter((p) => p.vote === "no").length;
-      
-          console.log(`📊 [VOTE_CREW] Résultats des votes : Oui = ${votesYes}, Non = ${votesNo}`);
-      
-          const approved = votesYes > votesNo;
-      
-          // Diffuser les résultats à tous les joueurs
-          broadcast(roomCode, {
-            type: "VOTE_RESULTS",
-            votesYes,
-            votesNo,
-            approved,
-          });
-      
-          console.log(`📤 [VOTE_CREW] Résultats envoyés aux joueurs de la salle ${roomCode}`);
-      
-          if (!approved) {
-            room.failedVotes += 1;
-            console.log(`❌ [VOTE_CREW] Équipage rejeté. Nombre d'échecs consécutifs : ${room.failedVotes}`);
-      
-            if (room.failedVotes >= 2) {
-              console.log(`🔄 [VOTE_CREW] Changement de capitaine après 2 échecs.`);
-              room.failedVotes = 0; // Réinitialise le compteur d'échecs
-              assignCaptain(roomCode); // Change le capitaine
-            }
-          } else {
-            room.failedVotes = 0; // Réinitialise le compteur si le vote est approuvé
-          }
-      
-          // Réinitialiser les votes pour la prochaine phase
-          room.players.forEach((p) => {
-            delete p.vote;
-          });
-      
-          console.log(`🔄 [VOTE_CREW] Votes réinitialisés pour la salle ${roomCode}`);
-        } else {
-          console.log(
-            `⏳ [VOTE_CREW] En attente des votes restants dans la salle ${roomCode} (${votesReceived}/${totalPlayers})`
-          );
-        }
+  // Gestion du vote d'équipage
+if (type === "VOTE_CREW" && roomCode) {
+  console.log(`📩 [VOTE_CREW] Reçu pour la salle ${roomCode} de la part de ${username}`);
+
+  const room = rooms[roomCode];
+  if (!room) {
+    console.error(`❌ [VOTE_CREW] Salle introuvable : ${roomCode}`);
+    return;
+  }
+
+  const player = room.players.find((p) => p.username === username);
+  if (!player) {
+    console.error(`❌ [VOTE_CREW] Joueur introuvable dans la salle ${roomCode} : ${username}`);
+    return;
+  }
+
+  // Ajout du vote de l'utilisateur
+  player.vote = data.vote; // "yes" ou "no"
+  console.log(`🗳️ [VOTE_CREW] Vote reçu : ${username} a voté "${data.vote}" dans la salle ${roomCode}`);
+
+  // Vérifie si tous les joueurs non membres de l'équipage ont voté
+  const totalPlayers = room.players.length; // Nombre total de joueurs dans la salle
+  const totalVotesNeeded = totalPlayers - 4; // Nombre de votes nécessaires (total - 4 joueurs de l'équipage et capitaine)
+  const votesReceived = room.players.filter((p) => p.vote !== undefined).length; // Nombre de votes reçus
+
+  console.log(totalVotesNeeded);
+  console.log(votesReceived);
+
+  if (votesReceived === totalVotesNeeded) {
+    console.log(`✅ [VOTE_CREW] Tous les votes nécessaires ont été reçus dans la salle ${roomCode}`);
+  
+    // Compte des votes
+    const votesYes = room.players.filter((p) => p.vote === "yes").length;
+    const votesNo = room.players.filter((p) => p.vote === "no").length;
+  
+    console.log(`📊 [VOTE_CREW] Résultats des votes : Oui = ${votesYes}, Non = ${votesNo}`);
+  
+    const approved = votesYes > votesNo;
+  
+    // Diffuser les résultats à tous les joueurs
+    broadcast(roomCode, {
+      type: "VOTE_RESULTS",
+      votesYes,
+      votesNo,
+      approved,
+    });
+  
+    console.log(`📤 [VOTE_CREW] Résultats envoyés aux joueurs de la salle ${roomCode}`);
+  
+    if (!approved) {
+      room.failedVotes += 1;
+      console.log(`❌ [VOTE_CREW] Équipage rejeté. Nombre d'échecs consécutifs : ${room.failedVotes}`);
+  
+      if (room.failedVotes >= 2) {
+        console.log(`🔄 [VOTE_CREW] Changement de capitaine après 2 échecs.`);
+        room.failedVotes = 0; // Réinitialise le compteur d'échecs
+        assignCaptain(roomCode); // Change le capitaine
       }
+    } else {
+      room.failedVotes = 0; // Réinitialise le compteur si le vote est approuvé
+    }
+  
+    // Réinitialiser les votes pour la prochaine phase
+    room.players.forEach((p) => {
+      delete p.vote;
+    });
+  
+    console.log(`🔄 [VOTE_CREW] Votes réinitialisés pour la salle ${roomCode}`);
+  }
+  else {
+    console.log(
+      `⏳ [VOTE_CREW] En attente des votes restants dans la salle ${roomCode} (${votesReceived}/${totalVotesNeeded})`
+    );
+  }
+}
+
+      
            
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);

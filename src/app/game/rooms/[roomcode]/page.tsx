@@ -28,7 +28,8 @@ const GameRoomPage: React.FC = () => {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [crewSelectionPhase, setCrewSelectionPhase] = useState<boolean>(false);
   const [votePhase, setVotePhase] = useState<boolean>(false);
-  const [crewMembers, setCrewMembers] = useState<string[]>([]); // Now stores only usernames
+  const [voteResult, setVoteResult] = useState<boolean | null>(null); // Résultat du vote
+  const [crewMembers, setCrewMembers] = useState<string[]>([]); // Noms des membres de l'équipage
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -70,7 +71,8 @@ const GameRoomPage: React.FC = () => {
         role?: string;
         players?: Player[];
         captain?: string;
-        selectedCrew?: string[]; // Contains only usernames
+        selectedCrew?: string[];
+        approved?: boolean; // Résultat du vote
       }
     ) => {
       console.log("📩 Message reçu :", data);
@@ -106,7 +108,7 @@ const GameRoomPage: React.FC = () => {
         case "CREW_SELECTED":
           if (data.selectedCrew) {
             console.log("📩 CREW_SELECTED reçu :", data.selectedCrew);
-            setCrewMembers(data.selectedCrew); // Stores usernames directly
+            setCrewMembers(data.selectedCrew);
             setCrewSelectionPhase(false);
             setVotePhase(true);
           }
@@ -115,6 +117,21 @@ const GameRoomPage: React.FC = () => {
         case "VOTE_RESULTS":
           console.log("✅ Résultats du vote reçus :", data);
           setVotePhase(false);
+          setVoteResult(data.approved || false);
+
+          // Si accepté, avancer à la prochaine étape après 3 secondes
+          if (data.approved) {
+            setTimeout(() => {
+              setVoteResult(null); // Réinitialiser
+              // Avancer à l'étape suivante
+            }, 3000);
+          } else {
+            // Si rejeté, relancer la phase de sélection
+            setTimeout(() => {
+              setVoteResult(null);
+              setCrewSelectionPhase(true);
+            }, 3000);
+          }
           break;
 
         default:
@@ -143,7 +160,7 @@ const GameRoomPage: React.FC = () => {
 
   console.log("🎥 Données transmises à VoteCrewPage :", {
     captain: players.find((p) => p.username === currentCaptain),
-    crewMembers, // Only usernames
+    crewMembers,
     allPlayers: players,
   });
 
@@ -156,7 +173,18 @@ const GameRoomPage: React.FC = () => {
         <>
           <HeaderGame />
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
-            {crewSelectionPhase && isCaptain ? (
+            {voteResult !== null ? (
+              voteResult ? (
+                <div className="w-full max-w-md rounded-lg p-6 text-white text-center bg-green-500">
+                  <p className="text-lg font-bold">Équipage accepté !</p>
+                </div>
+              ) : (
+                <div className="w-full max-w-md rounded-lg p-6 text-white text-center bg-red-500">
+                  <p className="text-lg font-bold">Équipage rejeté !</p>
+                  <p className="text-sm mt-2">Un nouveau capitaine sera sélectionné.</p>
+                </div>
+              )
+            ) : crewSelectionPhase && isCaptain ? (
               <SelectCrewPage
                 players={players.filter((p) => p.username !== username)}
                 roomCode={roomCode || ""}
@@ -171,8 +199,8 @@ const GameRoomPage: React.FC = () => {
                 currentUser={username || ""}
                 roomCode={roomCode || ""}
                 captain={players.find((p) => p.username === currentCaptain) || { username: "", avatar: "" }}
-                crewMembers={crewMembers} // Only usernames
-                allPlayers={players} // Full player objects
+                crewMembers={crewMembers}
+                allPlayers={players}
               />
             ) : currentCaptain ? (
               <CaptainChoicePage
