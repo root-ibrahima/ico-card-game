@@ -40,7 +40,6 @@ export type RoomEventType =
   | "ACTION_SELECTION" 
   | "ACTION_RESULTS"
   | "ROLE_CONFIRMED" 
-  | "VOTE_RESULTS"
   | "SIRENE_VOTE_UPDATE"
   | "SIRENE_IDENTIFIED";
 
@@ -61,6 +60,7 @@ export interface RoomEvent {
     actions?: { name: string; action: string }[];
     votes?: { [playerId: string]: number };
     identifiedSirene?: string;
+    role?: string;
   };
 }
 
@@ -96,4 +96,71 @@ export interface FooterGameProps {
   handleNewMessage: (message: string) => void;
   handlePlayerJoined: (player: Player) => void;
   handleRoleReceived: (role: string) => void;
+}
+
+// Removed HeaderGameProps as it is equivalent to FooterGameProps
+
+export interface CaptainChoicePageProps {
+  captainName: string;
+  username: string;
+  roomCode: string;
+  isCaptain: boolean;
+  players: Player[];
+  handleCaptainChange: (newCaptain: string) => void;
+  handleCrewSelected: () => void;
+  handleCrewSelectionPhase: () => void;
+  handleGameStart: () => void;
+  handleRoomUpdate: (players: Player[]) => void;
+  handlePlayerLeft: (player: Player) => void;
+  handleNewMessage: (message: string) => void;
+  handlePlayerJoined: (player: Player) => void;
+  handleRoleReceived: (role: string) => void;
+}
+
+export interface VoteCrewPageProps {
+  currentUser: string;
+  roomCode: string;
+  captain: Player;
+  crewMembers: string[];
+  allPlayers: Player[];
+  handleVote: (vote: "yes" | "no") => void;
+}
+
+export interface RoleDistributionProps {
+  role: string;
+  username: string;
+  roomCode: string;
+}
+
+export interface SelectCrewPageProps {
+  player: Player[];
+  roomCode: string;
+  username: string;
+  handleCaptainSelected: () => void;
+  handleCrewSelectionPhase: () => void;
+  handleGameStart: () => void;
+  handleRoomUpdate: (players: Player[]) => void;
+  handlePlayerLeft: (player: Player) => void;
+  handleNewMessage: (message: string) => void;
+  handlePlayerJoined: (player: Player) => void;
+  handleRoleReceived: (role: string) => void;
+}
+
+export interface IdentificationSireneProps {
+  currentUser: Player;
+  roomCode: string;
+  players: Player[];
+  votes?: { [playerId: string]: number };
+  identifiedSirene?: string | null;
+  voteSubmitted?: boolean;
+  handleVote?: (playerId: string) => void;
+}
+
+export interface ActionPageProps {
+  currentUser: Player | null;
+  crewMembers: Player[];
+  selectedAction: string | null;
+  actionsSent: boolean;
+  roomCode: string;
+  handleActionSelection: (action: string) => void;
 }

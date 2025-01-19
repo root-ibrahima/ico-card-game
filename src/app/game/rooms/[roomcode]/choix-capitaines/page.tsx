@@ -5,21 +5,28 @@ import Image from "next/image";
 import { sendMessageToRoom } from "@/lib/socket";
 
 interface CaptainChoicePageProps {
-  isCaptain: boolean; // Indique si l'utilisateur est le capitaine
-  captainName: string; // Nom du capitaine
-  username: string; // Nom de l'utilisateur
-  roomCode: string; // Code de la room
+  params: Promise<{ roomcode: string }>; // Correction : `params` est une promesse
 }
 
-const CaptainChoicePage: React.FC<CaptainChoicePageProps> = ({
-  isCaptain,
-  captainName,
-  username,
-  roomCode,
-}) => {
+const CaptainChoicePage: React.FC<CaptainChoicePageProps> = ({ params }) => {
+  const [roomcode, setRoomcode] = React.useState<string | null>(null);
+  
+  React.useEffect(() => {
+    params.then(data => setRoomcode(data.roomcode));
+  }, [params]);
+
+  if (!roomcode) {
+    return <div>Loading...</div>;
+  }
+
+  // 🔥 Simule un capitaine pour tester
+  const isCaptain = true; // À remplacer par la vraie logique
+  const captainName = "CaptainJack"; // À remplacer par la vraie logique
+  const username = "Player1"; // À remplacer par la vraie logique
+
   const confirmCaptainAction = () => {
     if (isCaptain) {
-      sendMessageToRoom(username, roomCode, "CAPTAIN_ACTION_CONFIRMED");
+      sendMessageToRoom(username, roomcode, "CAPTAIN_ACTION_CONFIRMED");
     }
   };
 
@@ -37,7 +44,7 @@ const CaptainChoicePage: React.FC<CaptainChoicePageProps> = ({
 
         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg mb-6">
           <Image
-            src={`/avatars/${captainName}.png`} // Placez ici l'avatar réel du capitaine
+            src={`/avatars/${captainName}.png`} // Remplace par l'avatar du capitaine réel
             alt="Capitaine"
             width={128}
             height={128}

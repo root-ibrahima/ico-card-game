@@ -42,7 +42,7 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
       <main className="flex-grow px-4 flex flex-col items-center text-center mt-10">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Votez pour l'équipage</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Votez pour l&apos;équipage</h1>
         <p className="text-base text-gray-600 mb-8">
           Voici les membres de l’équipage proposés par le capitaine.
         </p>
