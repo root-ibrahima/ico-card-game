@@ -1,5 +1,5 @@
 /**
- * Interface représentant un joueur.
+ * 🔹 Interface représentant un joueur.
  */
 export interface Player {
   id: string;
@@ -11,19 +11,22 @@ export interface Player {
   piratePoints?: number;
   marinPoints?: number;
   mancheGagnees?: number;
+  readyState?: boolean; // ✅ Ajouté pour indiquer si un joueur est prêt
 }
 
 /**
- * Interface représentant une salle de jeu.
+ * 🔹 Interface représentant une salle de jeu.
  */
 export interface Room {
+  id: string;
   host: string;
   players: Player[];
-  status: "waiting" | "in-progress" | "finished";
+  status: "waiting" | "in-progress" | "finished"; // ✅ Aligné avec Prisma
+  playersCount?: number; // ✅ Ajouté pour éviter de recalculer
 }
 
 /**
- * Événements possibles dans le WebSocket.
+ * 🔹 Liste des événements WebSocket possibles.
  */
 export type RoomEventType =
   | "PLAYER_JOINED"
@@ -37,15 +40,14 @@ export type RoomEventType =
   | "CREW_SELECTION_PHASE"
   | "CAPTAIN_SELECTED"
   | "CAPTAIN_CHANGE"
-  | "ACTION_SELECTION" 
+  | "ACTION_SELECTION"
   | "ACTION_RESULTS"
-  | "ROLE_CONFIRMED" 
-  | "VOTE_RESULTS"
+  | "ROLE_CONFIRMED"
   | "SIRENE_VOTE_UPDATE"
   | "SIRENE_IDENTIFIED";
 
 /**
- * Interface représentant un événement WebSocket.
+ * 🔹 Interface représentant un événement WebSocket.
  */
 export interface RoomEvent {
   type: RoomEventType;
@@ -64,10 +66,13 @@ export interface RoomEvent {
   };
 }
 
+/**
+ * 🔹 Props pour le composant `FooterGame`
+ */
 export interface FooterGameProps {
-  role?: string | null; 
-  piratePoints: number; 
-  marinPoints: number; 
+  role?: string | null;
+  piratePoints: number;
+  marinPoints: number;
   mancheGagnees: number;
   captain: string | null;
   isCaptain: boolean;
