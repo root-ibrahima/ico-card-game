@@ -398,5 +398,3 @@ function handlePlayerDisconnection(ws) {
       broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
     }
   });
-}
-

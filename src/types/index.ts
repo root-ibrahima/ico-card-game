@@ -3,7 +3,7 @@
  */
 export interface Player {
   id: string;
-  name: string;
+  username: string;
   role: "marin" | "pirate" | "sirene" | "captain"; 
   avatar: string;
   isCaptain: boolean;
@@ -34,10 +34,15 @@ export type RoomEventType =
   | "YOUR_ROLE"
   | "VOTE_RESULTS"
   | "CREW_SELECTED"
+  | "CREW_SELECTION_PHASE"
   | "CAPTAIN_SELECTED"
-  | "CAPTAIN_CHANGE"  // Ajouté pour gérer le changement de capitaine après plusieurs refus
-  | "ACTION_SELECTION" // Ajouté pour gérer la sélection des actions par l’équipage
-  | "ACTION_RESULTS";  // Ajouté pour afficher le résultat des actions après choix
+  | "CAPTAIN_CHANGE"
+  | "ACTION_SELECTION" 
+  | "ACTION_RESULTS"
+  | "ROLE_CONFIRMED" 
+  | "VOTE_RESULTS"
+  | "SIRENE_VOTE_UPDATE"
+  | "SIRENE_IDENTIFIED";
 
 /**
  * Interface représentant un événement WebSocket.
@@ -47,12 +52,48 @@ export interface RoomEvent {
   payload: {
     roomCode?: string;
     message?: string;
-    player?: Player; // ✅ Utilisation de l'interface `Player`
-    selectedCrew?: Player[]; // ✅ Utilisation de `Player[]` pour éviter la duplication
+    player?: Player;
+    selectedCrew?: Player[];
     votesYes?: number;
     votesNo?: number;
     approved?: boolean;
-    newCaptain?: string; // ✅ Ajouté pour savoir quel est le nouveau capitaine
-    actions?: { name: string; action: string }[]; // ✅ Ajouté pour gérer les choix d’action
+    newCaptain?: string;
+    actions?: { name: string; action: string }[];
+    votes?: { [playerId: string]: number };
+    identifiedSirene?: string;
   };
+}
+
+export interface FooterGameProps {
+  role?: string | null; 
+  piratePoints: number; 
+  marinPoints: number; 
+  mancheGagnees: number;
+  captain: string | null;
+  isCaptain: boolean;
+  roomCode: string;
+  username: string;
+  players: Player[];
+  gameStarted: boolean;
+  crewSelectionPhase: boolean;
+  crewMembers: Player[];
+  votePhase: boolean;
+  currentCaptain: string | null;
+  startGame: () => void;
+  confirmRole: () => void;
+  handleVote: (vote: "yes" | "no") => void;
+  handleAction: (action: string) => void;
+  handleCaptainChange: (newCaptain: string) => void;
+  handleRoleConfirmed: () => void;
+  handleVoteResults: () => void;
+  handleActionResults: () => void;
+  handleCrewSelected: () => void;
+  handleCaptainSelected: () => void;
+  handleCrewSelectionPhase: () => void;
+  handleGameStart: () => void;
+  handleRoomUpdate: (players: Player[]) => void;
+  handlePlayerLeft: (player: Player) => void;
+  handleNewMessage: (message: string) => void;
+  handlePlayerJoined: (player: Player) => void;
+  handleRoleReceived: (role: string) => void;
 }

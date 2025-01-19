@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any | null>(null);
+  interface User {
+    email: string;
+    // Add other user properties here
+  }
+
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -16,7 +21,7 @@ export default function DashboardPage() {
         setUser(data);
       } else {
         // Redirect to signin if user is not authenticated
-        router.push("/auth/signin");
+        router.push("/signin");
       }
       setLoading(false);
     };
