@@ -15,7 +15,7 @@ wss.on("connection", (ws) => {
       const data = JSON.parse(message);
       console.log("📩 Message reçu du client :", data);
 
-      let { type, roomCode, username, avatar, createNewRoom } = data;
+      let { type, roomCode, username, avatar, createNewRoom, selectedCrew } = data;
 
       if (!username) {
         console.error("❌ Erreur : username est undefined !");
@@ -115,7 +115,28 @@ wss.on("connection", (ws) => {
       // Gestion du capitaine sélectionné
       if (type === "CAPTAIN_ACTION_CONFIRMED" && roomCode) {
         console.log(`✅ Le capitaine a confirmé son action pour la salle ${roomCode}`);
-        broadcast(roomCode, { type: "NEXT_PHASE" }); // Passe à l'étape suivante
+
+        const room = rooms[roomCode];
+        if (!room) {
+          console.error(`❌ Salle introuvable : ${roomCode}`);
+          return;
+        }
+
+        const captain = room.find((p) => p.username === username);
+        if (!captain) {
+          console.error(`❌ Capitaine introuvable : ${username}`);
+          return;
+        }
+
+        broadcast(roomCode, { type: "CREW_SELECTION_PHASE", captain: captain.username });
+        console.log(`📤 Phase de sélection d'équipage commencée pour la salle ${roomCode}`);
+      }
+
+      // Gestion de la sélection de l'équipage
+      if (type === "CREW_SELECTED" && roomCode) {
+        console.log(`📤 Équipage sélectionné par le capitaine pour la salle ${roomCode}:`, selectedCrew);
+
+        broadcast(roomCode, { type: "CREW_SELECTED", selectedCrew });
       }
     } catch (error) {
       console.error("❌ Erreur WebSocket :", error);
@@ -148,14 +169,14 @@ function findExistingRoom() {
 }
 
 function assignRoles(roomCode) {
-  if (!rooms[roomCode] || rooms[roomCode].length !== 2) {
+  if (!rooms[roomCode] || rooms[roomCode].length !== 5) {
     console.error(`❌ Impossible d'attribuer les rôles : salle ${roomCode} invalide ou incomplète.`);
     return;
   }
 
-  const roles = ["Marin", "Pirate"].sort(() => Math.random() - 0.5);
+  const roles = ["Marin", "Marin", "Marin", "Pirate", "Pirate"].sort(() => Math.random() - 0.5);
   console.log(`🎲 Rôles générés pour la salle ${roomCode} : ${roles.join(", ")}`);
-  
+
   rooms[roomCode].forEach((player, index) => {
     const role = roles[index];
     player.role = role;
@@ -202,7 +223,6 @@ function assignCaptain(roomCode) {
     avatar: currentCaptain.avatar,
   });
   console.log(`📤 Envoi de l'événement "CAPTAIN_SELECTED" pour la salle ${roomCode}`);
-
 }
 
 /**
@@ -224,17 +244,12 @@ function handlePlayerDisconnection(ws) {
   Object.keys(rooms).forEach((roomCode) => {
     const room = rooms[roomCode];
 
-    // Trouve et supprime le joueur correspondant au WebSocket déconnecté
     const updatedRoom = room.filter((player) => player.ws !== ws);
 
     if (updatedRoom.length === 0) {
-      console.log(`🧹 Suppression de la salle vide : ${roomCode}`);
       delete rooms[roomCode];
     } else {
       rooms[roomCode] = updatedRoom;
-      console.log(`🔄 Mise à jour des joueurs dans la salle ${roomCode}`);
-
-      // Diffuse la mise à jour de la salle aux joueurs restants
       const playersList = updatedRoom.map(({ username, avatar }) => ({
         username,
         avatar,

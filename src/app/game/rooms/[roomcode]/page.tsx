@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { RoomEvent } from "@/types";
 import RoleDistribution from "./distribution-roles/page"; // Distribution des rôles
 import CaptainChoicePage from "./choix-capitaines/page"; // Page choix du capitaine
+import SelectCrewPage from "./selection-equipage-capitaine/page"; // Sélection de l'équipage (pour le capitaine)
 import FooterGame from "./components/FooterGame"; // Footer dynamique
 import HeaderGame from "./components/HeaderGame"; // Header dynamique
 
@@ -24,6 +25,7 @@ const GameRoomPage: React.FC = () => {
   const [isCaptain, setIsCaptain] = useState<boolean>(false); // Si l'utilisateur est capitaine
   const [players, setPlayers] = useState<Player[]>([]);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
+  const [crewSelectionPhase, setCrewSelectionPhase] = useState<boolean>(false); // Étape de sélection d'équipage
   const [loading, setLoading] = useState<boolean>(true);
   const [piratePoints, setPiratePoints] = useState<number>(0); // Points pirates
   const [marinPoints, setMarinPoints] = useState<number>(0); // Points marins
@@ -73,7 +75,6 @@ const GameRoomPage: React.FC = () => {
       switch (data.type) {
         case "YOUR_ROLE":
           if (data.role) {
-            console.log(`🎭 Rôle reçu : ${data.role}`);
             setRole(data.role); // Rôle attribué au joueur
           }
           break;
@@ -87,9 +88,13 @@ const GameRoomPage: React.FC = () => {
           break;
 
         case "CAPTAIN_SELECTED":
-          console.log(`👑 Nouveau capitaine désigné : ${data.captain}`);
           setCurrentCaptain(data.captain || null);
           setIsCaptain(data.captain === username); // Détermine si l'utilisateur est le capitaine
+          break;
+
+        case "CREW_SELECTION_PHASE":
+          setCrewSelectionPhase(true); // Active la phase de sélection d'équipage
+          console.log("🚀 Phase de sélection d'équipage activée !");
           break;
 
         case "SCORE_UPDATE":
@@ -100,7 +105,6 @@ const GameRoomPage: React.FC = () => {
 
         case "ALL_ROLES_CONFIRMED":
           console.log("🎉 Tous les rôles ont été confirmés !");
-          // Logique future pour passer à l'étape suivante, si nécessaire
           break;
 
         default:
@@ -134,13 +138,25 @@ const GameRoomPage: React.FC = () => {
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
-      {/* Affichage conditionnel selon l'état de la partie */}
       {gameStarted ? (
         <>
           <HeaderGame />
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
-            {/* Si un capitaine est défini, affiche la page choix-capitaine */}
-            {currentCaptain ? (
+            {crewSelectionPhase && isCaptain ? (
+              <SelectCrewPage
+              players={players.filter((p) => {
+                console.log("🔍 Filtrage des joueurs dans pageRoom :", p.username);
+                return p.username !== username; // Exclut le capitaine
+              })}
+              roomCode={roomCode || ""}
+              username={username || ""}
+            />
+            
+            ) : crewSelectionPhase ? (
+              <p className="text-center text-gray-600">
+                En attente que le capitaine sélectionne son équipage...
+              </p>
+            ) : currentCaptain ? (
               <CaptainChoicePage
                 isCaptain={isCaptain}
                 captainName={currentCaptain}
@@ -184,7 +200,6 @@ const GameRoomPage: React.FC = () => {
               <p>Préparez-vous à embarquer !</p>
             </div>
 
-            {/* Liste des joueurs */}
             <div className="grid grid-cols-4 gap-4 mb-8">
               {players.map((player, index) => (
                 <div
