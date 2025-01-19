@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface Player {
   username: string; // Identifiant unique
@@ -29,10 +30,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       }`}
     >
       {/* Avatar du joueur */}
-      <img
+      <Image
         src={player.avatar}
         alt={player.username}
-        className="w-20 h-20 object-cover rounded-full mx-auto mb-2"
+        width={80}
+        height={80}
+        className="object-cover rounded-full mx-auto mb-2"
       />
 
       {/* Nom du joueur */}

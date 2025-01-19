@@ -3,6 +3,7 @@
 import { useSession, SessionProvider } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 function EditProfilePageContent() {
@@ -80,11 +81,15 @@ function EditProfilePageContent() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-center mb-6">
             <label htmlFor="profileImage" className="cursor-pointer">
-              <img
-                src={previewImage || '/default-avatar.png'}
-                alt="Avatar Preview"
-                className="w-24 h-24 rounded-full mx-auto object-cover shadow-lg"
-              />
+              {previewImage && (
+                <Image
+                  src={previewImage}
+                  alt="Avatar Preview"
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-full mx-auto object-cover shadow-lg"
+                />
+              )}
               <span className="text-indigo-600 block mt-2">Changer l&apos;image</span>
             </label>
             <input
