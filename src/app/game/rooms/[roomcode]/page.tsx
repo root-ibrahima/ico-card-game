@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { connectToRoom, disconnectSocket, sendMessageToRoom } from "@/lib/socket";
 import { useRouter, usePathname } from "next/navigation";
-import { RoomEvent } from "@/types";
+import { RoomEvent } from "@/types/index";
 import RoleDistribution from "./distribution-roles/page";
 import CaptainChoicePage from "./choix-capitaines/page";
 import SelectCrewPage from "./selection-equipage-capitaine/page";
 import VoteCrewPage from "./vote-equipage/page";
 import FooterGame from "./components/FooterGame";
 import HeaderGame from "./components/HeaderGame";
+import Image from "next/image";
 
 interface Player {
   username: string;
@@ -25,11 +26,11 @@ const GameRoomPage: React.FC = () => {
   const [currentCaptain, setCurrentCaptain] = useState<string | null>(null);
   const [isCaptain, setIsCaptain] = useState<boolean>(false);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [crewMembers, setCrewMembers] = useState<string[]>([]);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [crewSelectionPhase, setCrewSelectionPhase] = useState<boolean>(false);
   const [votePhase, setVotePhase] = useState<boolean>(false);
-  const [crewMembers, setCrewMembers] = useState<string[]>([]);
+  const [voteResult, setVoteResult] = useState<boolean | null>(null); // Résultat du vote
+  const [crewMembers, setCrewMembers] = useState<string[]>([]); // Noms des membres de l'équipage
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -66,12 +67,22 @@ const GameRoomPage: React.FC = () => {
   useEffect(() => {
     if (!username || !roomCode) return;
 
-    const handleRoomEvent = (data: RoomEvent & { role?: string; players?: Player[]; captain?: string; selectedCrew?: string[]; approved?: boolean }) => {
+    const handleRoomEvent = (
+      data: RoomEvent & {
+        role?: string;
+        players?: Player[];
+        captain?: string;
+        selectedCrew?: string[];
+        approved?: boolean; // Résultat du vote
+      }
+    ) => {
       console.log("📩 Message reçu :", data);
 
       switch (data.type) {
         case "YOUR_ROLE":
-          if (data.role) setRole(data.role);
+          if (data.role) {
+            setRole(data.role);
+          }
           break;
 
         case "ROOM_UPDATE":
@@ -97,6 +108,7 @@ const GameRoomPage: React.FC = () => {
 
         case "CREW_SELECTED":
           if (data.selectedCrew) {
+            console.log("📩 CREW_SELECTED reçu :", data.selectedCrew);
             setCrewMembers(data.selectedCrew);
             setCrewSelectionPhase(false);
             setVotePhase(true);
@@ -106,6 +118,23 @@ const GameRoomPage: React.FC = () => {
         case "VOTE_RESULTS":
           console.log("✅ Résultats du vote reçus :", data);
           setVotePhase(false);
+          setVoteResult(data.approved || false);
+
+          // Si accepté, avancer à la prochaine étape après 3 secondes
+          if (data.approved) {
+            setTimeout(() => {
+              setVoteResult(null); // Réinitialiser
+              // Avancer à l'étape suivante
+            }, 3000);
+          } else {
+            // Si rejeté, relancer la phase de sélection
+            setTimeout(() => {
+              setVoteResult(null);
+              setCrewSelectionPhase(true);
+            }, 3000);
+          }
+          break;
+
         default:
           console.warn("⚠️ Événement inattendu :", data);
       }
@@ -120,7 +149,9 @@ const GameRoomPage: React.FC = () => {
 
   const startGame = () => {
     if (roomCode) {
-      sendMessageToRoom(username || "", roomCode, "GAME_START");
+      if (username && roomCode) {
+        sendMessageToRoom(username, roomCode, "GAME_START");
+      }
     }
   };
 
@@ -129,6 +160,12 @@ const GameRoomPage: React.FC = () => {
       sendMessageToRoom(username, roomCode, "ROLE_CONFIRMED");
     }
   };
+
+  console.log("🎥 Données transmises à VoteCrewPage :", {
+    captain: players.find((p) => p.username === currentCaptain),
+    crewMembers,
+    allPlayers: players,
+  });
 
   if (loading) return <p className="text-white">Chargement...</p>;
   if (!username) return <p className="text-white">Non connecté</p>;
@@ -139,20 +176,48 @@ const GameRoomPage: React.FC = () => {
         <>
           <HeaderGame />
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
+            {voteResult !== null ? (
+              voteResult ? (
+                <div className="w-full max-w-md rounded-lg p-6 text-white text-center bg-green-500">
+                  <p className="text-lg font-bold">Équipage accepté !</p>
+                </div>
+              ) : (
+                <div className="w-full max-w-md rounded-lg p-6 text-white text-center bg-red-500">
+                  <p className="text-lg font-bold">Équipage rejeté !</p>
+                  <p className="text-sm mt-2">Un nouveau capitaine sera sélectionné.</p>
+                </div>
+              )
+            ) : crewSelectionPhase && isCaptain ? (
+              <SelectCrewPage
+                players={players.filter((p) => p.username !== username)}
+                roomCode={roomCode || ""}
+                username={username || ""}
+              />
+            ) : crewSelectionPhase ? (
+              <p className="text-center text-gray-600">
+                En attente que le capitaine sélectionne son équipage...
+              </p>
             ) : votePhase ? (
               <VoteCrewPage
-                currentUser={username}
+                currentUser={username || ""}
                 roomCode={roomCode || ""}
                 captain={players.find((p) => p.username === currentCaptain) || { username: "", avatar: "" }}
-                crewMembers={crewMembers}
-                allPlayers={players}
+                crewMembers={crewMembers.map((member) => players.find((p) => p.username === member) as Player)}
+                players={players}
               />
             ) : currentCaptain ? (
-              <CaptainChoicePage isCaptain={isCaptain} captainName={currentCaptain} username={username} roomCode={roomCode || ""} />
+              <CaptainChoicePage
+                captain={players.find((p) => p.username === currentCaptain) || { username: "", avatar: "" }}
+                username={username || ""}
+                roomCode={roomCode || ""}
+              />
             ) : role ? (
               <>
-                <RoleDistribution role={role} username={username} roomCode={roomCode || ""} />
-                <button onClick={confirmRole} className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <RoleDistribution role={role} username={username || ""} roomCode={roomCode || ""} />
+                <button
+                  onClick={confirmRole}
+                  className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
                   J&apos;ai compris mon rôle
                 </button>
               </>
@@ -160,23 +225,54 @@ const GameRoomPage: React.FC = () => {
               <p className="text-center text-gray-500">Chargement de votre rôle...</p>
             )}
           </main>
-          <FooterGame 
-            role={role || ""} 
-            piratePoints={0} 
-            marinPoints={0} 
-            mancheGagnees={0} 
-          />
+          <FooterGame role={role || undefined} piratePoints={0} marinPoints={0} mancheGagnees={0} />
         </>
       ) : (
         <>
           <div className="w-full bg-blue-600 text-white px-4 py-4 flex items-center justify-between fixed top-0">
-            <button onClick={() => router.back()} className="font-medium">⬅ Retour</button>
+            <button onClick={() => router.back()} className="font-medium">
+              ⬅ Retour
+            </button>
             <h1 className="text-xl font-bold text-center">Lancement de la partie</h1>
             <div />
           </div>
-          <main className="flex-grow flex flex-col items-center justify-center bg-blue-600 text-white px-6 overflow-hidden">
-            <h2 className="text-3xl font-bold mb-4">{roomCode || "CODE"}</h2>
 
+          <main className="flex-grow flex flex-col items-center justify-center bg-blue-600 text-white px-6 overflow-hidden">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4">{roomCode || "CODE"}</h2>
+              <p>Préparez-vous à embarquer !</p>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              {players.map((player, index) => (
+                <div
+                  key={index}
+                  className="bg-white text-black rounded-lg p-3 flex flex-col items-center shadow-md"
+                >
+                  <Image
+                    src={player.avatar}
+                    alt={player.username}
+                    width={64}
+                    height={64}
+                    className="rounded-full mb-2"
+                  />
+                  <p className={`text-sm font-semibold ${username === player.username ? "text-blue-600" : ""}`}>
+                    {player.username} {username === player.username && "(vous)"}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-sm text-white mb-6">
+              Les autres joueurs peuvent entrer ce code pour rejoindre la partie.
+            </p>
+
+            <button
+              onClick={startGame}
+              className="bg-white text-blue-600 font-bold py-3 px-6 rounded-full shadow-lg"
+            >
+              Commencer la partie
+            </button>
           </main>
         </>
       )}
@@ -185,7 +281,8 @@ const GameRoomPage: React.FC = () => {
 };
 
 export default GameRoomPage;
-function setVoteResult(approved: boolean) {
-  console.log("Vote result:", approved);
-}
-
+// next.config.js
+export const reactStrictMode = true;
+export const images = {
+  domains: ['api.dicebear.com'],
+};
