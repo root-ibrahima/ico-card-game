@@ -16,7 +16,6 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error || !data.user) {
-      console.error("API /auth/register: Supabase signup error", error);
       return NextResponse.json(
         { error: error?.message || "Registration failed" },
         { status: 500 }
@@ -30,8 +29,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("API /auth/register: Internal server error", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

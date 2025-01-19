@@ -1,92 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import { createClient } from "@supabase/supabase-js";
 
-interface UserProfileData {
-  userId: string;
-  username?: string;
-  email?: string;
-  password?: string;
-  imagePath?: string;
-}
+const prisma = new PrismaClient();
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-async function updateUserProfile(data: UserProfileData) {
-  const { userId, username, email, password, imagePath } = data;
-
-  console.log('Mise à jour du profil utilisateur avec les données:', data); // Log des données
-
-  // Convertir userId en entier
-  const userIdInt = parseInt(userId, 10);
-  if (isNaN(userIdInt)) {
-    console.error('ID utilisateur invalide:', userId);
-    return NextResponse.json(
-      { message: 'ID utilisateur invalide.' },
-      { status: 400 }
-    );
-  }
-
-  const updateData: Partial<{ username: string; email: string; password: string; image: { connect: { id: number } } }> = {};
-  if (username) updateData.username = username;
-  if (email) updateData.email = email;
-  if (password) updateData.password = password;
-  if (imagePath) {
-    const imageId = parseInt(imagePath, 10);
-    if (!isNaN(imageId)) {
-      updateData.image = { connect: { id: imageId } };
-    }
-  }
-
-  console.log('Données préparées pour Prisma:', updateData); // Log des données Prisma
-
-  try {
-    const updatedUser = await prisma.user.update({
-      where: { id: userIdInt }, // Utilisation de userIdInt (entier)
-      data: updateData,
-      include: { image: true },
-    });
-
-    console.log('Utilisateur mis à jour:', updatedUser); // Log de la réponse Prisma
-
-    return NextResponse.json(
-      { message: 'Profil mis à jour avec succès.', updatedUser },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour du profil dans Prisma:', error);
-    return NextResponse.json(
-      { message: 'Erreur lors de la mise à jour du profil.' },
-      { status: 500 }
-    );
-  }
-}
-
+/**
+ * 🔄 PUT : Met à jour le profil utilisateur.
+ */
 export async function PUT(req: NextRequest) {
   try {
-    const body = await req.json();
-    console.log('Données reçues:', body); // Ajouter un log des données reçues
+    const { id, name, email } = await req.json();
 
-    const { action } = body;
-
-    if (!action) {
-      return NextResponse.json(
-        { message: 'Action non spécifiée.' },
-        { status: 400 }
-      );
+    if (!id || !name || !email) {
+      return NextResponse.json({ error: "❌ Champs requis manquants." }, { status: 400 });
     }
 
-    switch (action) {
-      case 'updateProfile':
-        return await updateUserProfile(body);
-      default:
-        return NextResponse.json(
-          { message: 'Action non reconnue.' },
-          { status: 400 }
-        );
+    // Mise à jour dans Prisma
+    const updatedProfile = await prisma.player.update({
+      where: { id },
+      data: { name },
+    });
+
+    // Mise à jour dans Supabase
+    const { error } = await supabase
+      .from("profiles")
+      .update({ name, email })
+      .eq("id", id);
+
+    if (error) {
+      throw error;
     }
+
+    return NextResponse.json(updatedProfile, { status: 200 });
   } catch (error) {
-    console.error('Erreur API:', error);
-    return NextResponse.json(
-      { message: 'Erreur interne du serveur.', error: (error instanceof Error ? error.message : 'Unknown error') },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : "❌ Échec de la mise à jour du profil.";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
