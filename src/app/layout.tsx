@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isGameRoute = pathname.startsWith("/game");
+  const isNoFooterRoute = pathname.startsWith("/game") || pathname === "/signin";
 
   return (
     <html lang="fr">
@@ -41,7 +41,7 @@ export default function RootLayout({
         <main>{children}</main>
 
         {/* Conditionnellement afficher le footer */}
-        {!isGameRoute && <Footer />}
+        {!isNoFooterRoute && <Footer />}
       </body>
     </html>
   );
