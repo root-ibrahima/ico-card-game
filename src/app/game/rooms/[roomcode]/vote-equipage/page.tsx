@@ -13,8 +13,7 @@ interface VoteCrewPageProps {
   currentUser: string;
   roomCode: string;
   captain: Player;
-  crewMembers: string[]; // Only usernames
-  allPlayers: Player[]; // Full player objects
+  crewMembers: Player[]; // ✅ Correction : stocker des objets `Player`
 }
 
 const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
@@ -22,14 +21,8 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
   roomCode,
   captain,
   crewMembers,
-  allPlayers,
 }) => {
   const [vote, setVote] = useState<"yes" | "no" | null>(null);
-
-  // Map usernames in `crewMembers` to full `Player` objects
-  const crewMemberObjects = crewMembers
-    .map((username) => allPlayers.find((player) => player.username === username))
-    .filter((player): player is Player => !!player); // Remove undefined entries
 
   const handleVote = (userVote: "yes" | "no") => {
     setVote(userVote);
@@ -37,7 +30,7 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
   };
 
   const isCaptain = currentUser === captain.username;
-  const isCrewMember = crewMembers.includes(currentUser);
+  const isCrewMember = crewMembers.some((member) => member.username === currentUser); // ✅ Vérification correcte
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
@@ -52,7 +45,7 @@ const VoteCrewPage: React.FC<VoteCrewPageProps> = ({
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
-          {crewMemberObjects.map((member) => (
+          {crewMembers.map((member) => (
             <PlayerCard key={member.username} player={member} isCrewMember={true} />
           ))}
         </div>

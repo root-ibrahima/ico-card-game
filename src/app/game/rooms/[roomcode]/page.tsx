@@ -14,8 +14,6 @@ import HeaderGame from "./components/HeaderGame";
 interface Player {
   username: string;
   avatar: string;
-  bio?: string;
-  score?: number;
 }
 
 const GameRoomPage: React.FC = () => {
@@ -31,6 +29,7 @@ const GameRoomPage: React.FC = () => {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [crewSelectionPhase, setCrewSelectionPhase] = useState<boolean>(false);
   const [votePhase, setVotePhase] = useState<boolean>(false);
+  const [crewMembers, setCrewMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -74,19 +73,28 @@ const GameRoomPage: React.FC = () => {
         case "YOUR_ROLE":
           if (data.role) setRole(data.role);
           break;
+
         case "ROOM_UPDATE":
-          if (data.players) setPlayers(data.players);
+          if (data.players) {
+            console.log("📩 ROOM_UPDATE reçu :", data.players);
+            setPlayers(data.players);
+          }
           break;
+
         case "GAME_START":
           setGameStarted(true);
           break;
+
         case "CAPTAIN_SELECTED":
           setCurrentCaptain(data.captain || null);
           setIsCaptain(data.captain === username);
           break;
+
         case "CREW_SELECTION_PHASE":
           setCrewSelectionPhase(true);
+          console.log("🚀 Phase de sélection d'équipage activée !");
           break;
+
         case "CREW_SELECTED":
           if (data.selectedCrew) {
             setCrewMembers(data.selectedCrew);
@@ -94,14 +102,10 @@ const GameRoomPage: React.FC = () => {
             setVotePhase(true);
           }
           break;
+
         case "VOTE_RESULTS":
+          console.log("✅ Résultats du vote reçus :", data);
           setVotePhase(false);
-          setVoteResult(data.approved || false);
-          if (!data.approved) {
-            setTimeout(() => {
-              setCrewSelectionPhase(true);
-            }, 3000);
-          }
         default:
           console.warn("⚠️ Événement inattendu :", data);
       }
@@ -115,13 +119,13 @@ const GameRoomPage: React.FC = () => {
   }, [username, roomCode]);
 
   const startGame = () => {
-    if (username && roomCode) {
-      sendMessageToRoom(username, roomCode, "GAME_START");
+    if (roomCode) {
+      sendMessageToRoom(username || "", roomCode, "GAME_START");
     }
   };
 
   const confirmRole = () => {
-    if (username && roomCode) {
+    if (roomCode && username) {
       sendMessageToRoom(username, roomCode, "ROLE_CONFIRMED");
     }
   };
@@ -135,8 +139,6 @@ const GameRoomPage: React.FC = () => {
         <>
           <HeaderGame />
           <main className="flex-grow flex flex-col items-center justify-center bg-white overflow-hidden">
-            {crewSelectionPhase ? (
-              <SelectCrewPage player={players.filter((p) => p.username !== username)} roomCode={roomCode || ""} username={username || ""} />
             ) : votePhase ? (
               <VoteCrewPage
                 currentUser={username}
@@ -158,7 +160,12 @@ const GameRoomPage: React.FC = () => {
               <p className="text-center text-gray-500">Chargement de votre rôle...</p>
             )}
           </main>
-          <FooterGame role={role || undefined} piratePoints={0} marinPoints={0} mancheGagnees={0} />
+          <FooterGame 
+            role={role || ""} 
+            piratePoints={0} 
+            marinPoints={0} 
+            mancheGagnees={0} 
+          />
         </>
       ) : (
         <>
@@ -169,7 +176,7 @@ const GameRoomPage: React.FC = () => {
           </div>
           <main className="flex-grow flex flex-col items-center justify-center bg-blue-600 text-white px-6 overflow-hidden">
             <h2 className="text-3xl font-bold mb-4">{roomCode || "CODE"}</h2>
-            <button onClick={startGame} className="bg-white text-blue-600 font-bold py-3 px-6 rounded-full shadow-lg">Commencer la partie</button>
+
           </main>
         </>
       )}
