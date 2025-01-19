@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import Sidebar from "../../components/DashboardComponents/Sidebare";
+import { Sidebare } from "../../components/DashboardComponents/Sidebare";
 
-const Home: React.FC = () => {
+const Dashboard: React.FC = () => {
   return (
     <div>
-      <Sidebar />
+      <Sidebare />
     </div>
   );
 };
 
-export default Home;
+export default Dashboard;
