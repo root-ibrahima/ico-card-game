@@ -7,7 +7,7 @@ import { RoomEvent } from "@/types";
 import RoleDistribution from "./distribution-roles/page";
 import CaptainChoicePage from "./choix-capitaines/page";
 import SelectCrewPage from "./selection-equipage-capitaine/page";
-import VoteCrewPage from "./vote-equipage/page"; // Nouvelle page pour voter
+import VoteCrewPage from "./vote-equipage/page";
 import FooterGame from "./components/FooterGame";
 import HeaderGame from "./components/HeaderGame";
 
@@ -28,11 +28,8 @@ const GameRoomPage: React.FC = () => {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [crewSelectionPhase, setCrewSelectionPhase] = useState<boolean>(false);
   const [votePhase, setVotePhase] = useState<boolean>(false);
-  const [crewMembers, setCrewMembers] = useState<Player[]>([]);
+  const [crewMembers, setCrewMembers] = useState<string[]>([]); // Now stores only usernames
   const [loading, setLoading] = useState<boolean>(true);
-  const [piratePoints, setPiratePoints] = useState<number>(0);
-  const [marinPoints, setMarinPoints] = useState<number>(0);
-  const [mancheGagnees, setMancheGagnees] = useState<number>(0);
 
   useEffect(() => {
     const segments = pathname.split("/");
@@ -73,10 +70,7 @@ const GameRoomPage: React.FC = () => {
         role?: string;
         players?: Player[];
         captain?: string;
-        selectedCrew?: Player[];
-        piratePoints?: number;
-        marinPoints?: number;
-        mancheGagnees?: number;
+        selectedCrew?: string[]; // Contains only usernames
       }
     ) => {
       console.log("📩 Message reçu :", data);
@@ -88,7 +82,7 @@ const GameRoomPage: React.FC = () => {
           }
           break;
 
-          case "ROOM_UPDATE":
+        case "ROOM_UPDATE":
           if (data.players) {
             console.log("📩 ROOM_UPDATE reçu :", data.players);
             setPlayers(data.players);
@@ -109,28 +103,14 @@ const GameRoomPage: React.FC = () => {
           console.log("🚀 Phase de sélection d'équipage activée !");
           break;
 
-          case "CREW_SELECTED":
-            if (data.selectedCrew) {
-              console.log("📩 CREW_SELECTED reçu :", data.selectedCrew);
-          
-              setTimeout(() => {
-                const selectedPlayers = players.filter((player) =>
-                  data.selectedCrew.includes(player.username)
-                );
-                console.log("✅ Membres sélectionnés :", selectedPlayers);
-          
-                setCrewMembers(selectedPlayers);
-                setCrewSelectionPhase(false);
-                setVotePhase(true);
-              }, 100); // 100ms pour garantir la synchronisation
-            }
-            break;
-          
-          
-          
-          
-
-          
+        case "CREW_SELECTED":
+          if (data.selectedCrew) {
+            console.log("📩 CREW_SELECTED reçu :", data.selectedCrew);
+            setCrewMembers(data.selectedCrew); // Stores usernames directly
+            setCrewSelectionPhase(false);
+            setVotePhase(true);
+          }
+          break;
 
         case "VOTE_RESULTS":
           console.log("✅ Résultats du vote reçus :", data);
@@ -163,7 +143,8 @@ const GameRoomPage: React.FC = () => {
 
   console.log("🎥 Données transmises à VoteCrewPage :", {
     captain: players.find((p) => p.username === currentCaptain),
-    crewMembers,
+    crewMembers, // Only usernames
+    allPlayers: players,
   });
 
   if (loading) return <p className="text-white">Chargement...</p>;
@@ -187,12 +168,12 @@ const GameRoomPage: React.FC = () => {
               </p>
             ) : votePhase ? (
               <VoteCrewPage
-              currentUser={username || ""}
-              roomCode={roomCode || ""}
-              captain={players.find((p) => p.username === currentCaptain) || { username: "", avatar: "" }}
-              crewMembers={crewMembers} // Cette liste doit contenir les objets complets
-            />
-
+                currentUser={username || ""}
+                roomCode={roomCode || ""}
+                captain={players.find((p) => p.username === currentCaptain) || { username: "", avatar: "" }}
+                crewMembers={crewMembers} // Only usernames
+                allPlayers={players} // Full player objects
+              />
             ) : currentCaptain ? (
               <CaptainChoicePage
                 isCaptain={isCaptain}
@@ -214,7 +195,7 @@ const GameRoomPage: React.FC = () => {
               <p className="text-center text-gray-500">Chargement de votre rôle...</p>
             )}
           </main>
-          <FooterGame />
+          <FooterGame role={role} />
         </>
       ) : (
         <>
