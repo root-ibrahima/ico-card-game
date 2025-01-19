@@ -28,9 +28,14 @@ const UserTable: React.FC = () => {
       }
 
       setUsers(data || []);
-    } catch (err: any) {
-      setError(err.message);
-      console.error("Error fetching users:", err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+        console.error("Error fetching users:", err.message);
+      } else {
+        setError("An unknown error occurred");
+        console.error("Error fetching users:", err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -41,9 +46,9 @@ const UserTable: React.FC = () => {
 
     // Abonnement Realtime
     const subscription = supabase
-      .from("users") // Nom de la table
-      .on("postgres_changes", { event: "UPDATE", schema: "public" }, (payload) => {
-        console.log("Realtime update:", payload);
+      .channel('public:users')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, (payload: { new: User }) => {
+        console.log('Realtime update:', payload);
         const updatedUser = payload.new;
         setUsers((prevUsers) =>
           prevUsers.map((user) =>
@@ -55,7 +60,7 @@ const UserTable: React.FC = () => {
 
     // Cleanup
     return () => {
-      supabase.removeSubscription(subscription);
+      supabase.removeChannel(subscription);
     };
   }, []);
 

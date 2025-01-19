@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import UserTable from "./UserTable"; // Import du composant utilisateurs
+import Image from 'next/image';
 
 export const Sidebare: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -64,7 +65,7 @@ export const Sidebare: React.FC = () => {
               className="text-gray-200 hover:text-white"
               onClick={() => setIsOpen(!isOpen)}
             >
-              <img
+              <Image
                 src={isOpen ? "/NavbarDashboard/ArrowLeft.png" : "/NavbarDashboard/ArrowRight.png"}
                 alt="Toggle Menu"
                 className="h-6 w-6"
@@ -83,7 +84,7 @@ export const Sidebare: React.FC = () => {
                       : "hover:bg-blue-700 opacity-75"
                   } ${isOpen ? "justify-start" : "justify-center"}`}
                 >
-                  <img src={item.icon} alt={item.name} className="h-6 w-6" />
+                  <Image src={item.icon} alt={item.name} className="h-6 w-6" />
                   {isOpen && <span className="whitespace-nowrap">{item.name}</span>}
                 </li>
               ))}
@@ -94,9 +95,11 @@ export const Sidebare: React.FC = () => {
                   }`}
                   onClick={() => setActiveContent("Paramètres")}
                 >
-                  <img
+                  <Image
                     src="/NavbarDashboard/Options.png"
                     alt="Paramètres"
+                    width={24}
+                    height={24}
                     className="h-6 w-6"
                   />
                   {isOpen && <span>Paramètres</span>}
