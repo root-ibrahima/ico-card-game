@@ -18,7 +18,7 @@ model User {
 
   // Relations
   players     Player[]
-  hostedRooms Room[]     @relation("HostRooms") // ✅ L'utilisateur peut héberger plusieurs salles
+  hostedRooms Room[]     @relation("HostRooms") // ✅ Un utilisateur peut héberger plusieurs salles
   sessions    Session? // ✅ Un utilisateur peut avoir une session
   memberRooms UserRoom[] // ✅ Relation Many-to-Many via une table pivot
 }
@@ -84,6 +84,38 @@ model Card {
   type        String
   effect      Json
   createdAt   DateTime @default(now())
+}
+
+/// 🔹 **Modèle `BugReport`** : Rapports de bugs des utilisateurs
+model BugReport {
+  id          BigInt   @id @default(autoincrement())
+  user        String?  @db.VarChar
+  email       String?  @db.VarChar
+  subject     String?  @db.VarChar(50)
+  description String?
+  priority    String?  @db.VarChar
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+}
+
+/// 🔹 **Modèle `User_Admin`** : Administrateurs du système
+model User_Admin {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  profile_picture String?
+  status          String   @default("active")
+  created_at      DateTime @default(now())
+}
+
+/// 🔹 **Table pivot `PlayerRooms`** pour `Player` <-> `Room`
+model PlayerRooms {
+  A    String
+  B    String
+  Room Room   @relation(fields: [A], references: [id], onDelete: Cascade)
+
+  @@id([A, B], map: "_PlayerRooms_AB_pkey")
+  @@index([B], map: "_PlayerRooms_B_index")
+  @@map("_PlayerRooms")
 }
 
 /// 🔹 **Enum `RoomStatus`** : Définition des statuts possibles pour une salle
