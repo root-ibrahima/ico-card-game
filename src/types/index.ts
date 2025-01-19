@@ -40,7 +40,9 @@ export type RoomEventType =
   | "ACTION_SELECTION" 
   | "ACTION_RESULTS"
   | "ROLE_CONFIRMED" 
-  | "VOTE_RESULTS";
+  | "VOTE_RESULTS"
+  | "SIRENE_VOTE_UPDATE"
+  | "SIRENE_IDENTIFIED";
 
 /**
  * Interface représentant un événement WebSocket.
@@ -50,16 +52,17 @@ export interface RoomEvent {
   payload: {
     roomCode?: string;
     message?: string;
-    player?: Player; // ✅ Utilisation de l'interface `Player`
-    selectedCrew?: Player[]; // ✅ Utilisation de `Player[]` pour éviter la duplication
+    player?: Player;
+    selectedCrew?: Player[];
     votesYes?: number;
     votesNo?: number;
     approved?: boolean;
-    newCaptain?: string; // ✅ Ajouté pour savoir quel est le nouveau capitaine
-    actions?: { name: string; action: string }[]; // ✅ Ajouté pour gérer les choix d’action
+    newCaptain?: string;
+    actions?: { name: string; action: string }[];
+    votes?: { [playerId: string]: number };
+    identifiedSirene?: string;
   };
 }
-
 
 export interface FooterGameProps {
   role?: string | null; 

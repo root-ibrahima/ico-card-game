@@ -5,7 +5,12 @@ import { connectToRoom, disconnectSocket } from "@/lib/socket";
 import type { RoomEvent } from "@/types/index";
 import ActionCard from "./ActionCard";
 
-const SpectatorPage = ({ roomCode }: { roomCode: string }) => {
+interface SpectatorPageProps {
+    params: { roomcode: string };
+}
+
+const SpectatorPage: React.FC<SpectatorPageProps> = ({ params }) => {
+    const roomCode = params.roomcode;
     const [actions, setActions] = useState<{ username: string; action: string }[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
