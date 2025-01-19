@@ -16,19 +16,44 @@ interface VoteProps {
 
 const EquipageVote = ({ currentUser, roomCode, captain, crewMembers }: VoteProps) => {
     const [approved, setApproved] = useState<boolean | null>(null);
+    const [newCaptain, setNewCaptain] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
     const router = useRouter();
 
     useEffect(() => {
         if (!roomCode || !currentUser) return;
 
         const handleRoomEvent = (data: RoomEvent) => {
-            if (data.type === "VOTE_RESULTS") {
-                setVotesYes(data.payload.votesYes || 0);
-                setApproved(data.payload.approved || false);
+            try {
+                console.log("📩 Événement reçu :", data);
 
-                setTimeout(() => {
-                    router.push(data.payload.approved ? "/game/EquipageAccepte" : "/game/EquipageRefuse");
-                }, 3000);
+                switch (data.type) {
+                    case "VOTE_RESULTS":
+                        setLoading(true);
+                        setApproved(data.payload.approved ?? null);
+
+                        console.log("🔎 Vote approuvé :", data.payload.approved);
+
+                        setTimeout(() => {
+                            router.push(data.payload.approved ? "/game/choix-action-membres" : `/game/rooms/${roomCode}`);
+                        }, 3000);
+                        break;
+
+                    case "CAPTAIN_CHANGE":
+                        setNewCaptain(data.payload.newCaptain ?? null);
+                        console.log("👑 Nouveau capitaine :", data.payload.newCaptain);
+
+                        setTimeout(() => {
+                            router.push(`/game/rooms/${roomCode}`);
+                        }, 2000);
+                        break;
+
+                    default:
+                        console.warn("⚠️ Événement WebSocket inconnu :", data);
+                        break;
+                }
+            } catch (error) {
+                console.error("❌ Erreur WebSocket :", error);
             }
         };
 
@@ -40,9 +65,21 @@ const EquipageVote = ({ currentUser, roomCode, captain, crewMembers }: VoteProps
     }, [roomCode, currentUser, router]);
 
     const handleVote = (vote: "yes" | "no") => {
+        console.log(`🗳️ ${currentUser.name} vote :`, vote);
+
         sendMessageToRoom(currentUser.name, roomCode, "VOTE_CREW", {
             vote,
-            selectedCrew: crewMembers.map((c) => c.name),
+            selectedCrew: crewMembers.map((c) => ({
+                id: c.id,
+                name: c.name,
+                role: c.role,
+                avatar: c.avatar,
+                isCaptain: c.isCaptain,
+                roomCode: c.roomCode,
+                piratePoints: c.piratePoints,
+                marinPoints: c.marinPoints,
+                mancheGagnees: c.mancheGagnees,
+            })),
         });
     };
 
@@ -52,43 +89,45 @@ const EquipageVote = ({ currentUser, roomCode, captain, crewMembers }: VoteProps
             <main className="flex-grow flex flex-col items-center justify-center text-center px-4">
                 <h1 className="text-2xl font-bold text-gray-800">Vote sur l&apos;équipage</h1>
                 <p className="text-lg text-gray-700">Capitaine : {captain.name}</p>
-                <p className="text-lg text-gray-700">Membres d&apos;équipage :</p>
-                <ul>
-                    {crewMembers.map((member, index) => (
-                        <li key={index} className="text-lg">{member.name}</li>
-                    ))}
-                </ul>
 
-                <div className="mt-4">
-                    <button
-                        onClick={() => handleVote("yes")}
-                        className="bg-green-500 text-white px-4 py-2 rounded-lg m-2"
-                    >
-                        ✅ Accepter
-                    </button>
-                    <button
-                        onClick={() => handleVote("no")}
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg m-2"
-                    >
-                        ❌ Refuser
-                    </button>
-                </div>
+                {loading ? (
+                    <p className="text-lg font-bold text-blue-600">Calcul des votes en cours...</p>
+                ) : (
+                    <>
+                        <div className="mt-4">
+                            <button
+                                onClick={() => handleVote("yes")}
+                                className="bg-green-500 text-white px-4 py-2 rounded-lg m-2"
+                            >
+                                ✅ Accepter
+                            </button>
+                            <button
+                                onClick={() => handleVote("no")}
+                                className="bg-red-500 text-white px-4 py-2 rounded-lg m-2"
+                            >
+                                ❌ Refuser
+                            </button>
+                        </div>
 
-                {approved !== null && (
-                    <p className={`text-xl font-bold mt-4 ${approved ? "text-green-600" : "text-red-600"}`}>
-                        {approved ? "✅ Équipage accepté !" : "❌ Équipage refusé !" }
-                    </p>
+                        {approved !== null && (
+                            <p className={`text-xl font-bold mt-4 ${approved ? "text-green-600" : "text-red-600"}`}>
+                                {approved ? "✅ Équipage accepté !" : "❌ Équipage refusé !" }
+                            </p>
+                        )}
+
+                        {newCaptain && <p className="text-lg font-bold mt-4">👑 Nouveau capitaine : {newCaptain}</p>}
+                    </>
                 )}
             </main>
 
-            <FooterGame role="someRole" piratePoints={0} marinPoints={0} mancheGagnees={0} />
-    
+            <FooterGame 
+                role={currentUser?.role || "marin"} 
+                piratePoints={currentUser?.piratePoints || 0} 
+                marinPoints={currentUser?.marinPoints || 0} 
+                mancheGagnees={currentUser?.mancheGagnees || 0} 
+            />
         </div>
     );
 };
 
 export default EquipageVote;
-function setVotesYes(arg0: number) {
-    throw new Error("Function not implemented.");
-}
-
