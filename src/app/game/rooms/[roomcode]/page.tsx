@@ -146,7 +146,9 @@ const GameRoomPage: React.FC = () => {
     <div className="h-screen w-screen flex flex-col overflow-hidden">
       {gameStarted ? (
         <>
-          <HeaderGame />
+          <HeaderGame
+          avatar={players.find((p) => p.username === username)?.avatar || ""}
+          />
           <main className="flex-grow flex flex-col items-center justify-center bg-white">
             {/* Écrans de jeu selon la phase */}
             {voteResult !== null ? (
@@ -159,15 +161,15 @@ const GameRoomPage: React.FC = () => {
                   <p className="text-lg font-bold">Équipage rejeté !</p>
                   <p className="text-sm mt-2">Un nouveau capitaine sera sélectionné.</p>
                 </div>
-              )
-            ) : crewSelectionPhase && isCaptain ? (
-              <SelectCrewPage
-                // NB : on “fakera” les props non implémentées ici
+                )
+              ) : crewSelectionPhase && isCaptain ? (
+                <SelectCrewPage
                 players={players.filter((p) => p.username !== username)}
                 roomCode={roomCode || ""}
                 username={username || ""}
-              />
-            ) : crewSelectionPhase ? (
+                captainAvatar={players.find((p) => p.username === currentCaptain)?.avatar || ""}
+                />
+              ) : crewSelectionPhase ? (
               <p className="text-center text-gray-600">
                 En attente que le capitaine sélectionne son équipage...
               </p>

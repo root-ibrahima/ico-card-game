@@ -12,6 +12,10 @@ export interface Player {
   marinPoints?: number;
   mancheGagnees?: number;
   readyState?: boolean; // ✅ Ajouté pour indiquer si un joueur est prêt
+  isCrewMember?: boolean; // Indique si le joueur est un membre d'équipage
+  isSelected?: boolean; // Indique si le joueur est sélectionné
+  selectionNumber?: number; // Position du joueur dans la sélection
+  voters?: Player[]; // Liste des joueurs ayant voté
 }
 
 /**
@@ -77,36 +81,8 @@ export interface FooterGameProps {
   piratePoints: number;
   marinPoints: number;
   mancheGagnees: number;
-  captain: string | null;
-  isCaptain: boolean;
-  roomCode: string;
-  username: string;
-  players: Player[];
-  gameStarted: boolean;
-  crewSelectionPhase: boolean;
-  crewMembers: Player[];
-  votePhase: boolean;
-  currentCaptain: string | null;
-  startGame: () => void;
-  confirmRole: () => void;
-  handleVote: (vote: "yes" | "no") => void;
-  handleAction: (action: string) => void;
-  handleCaptainChange: (newCaptain: string) => void;
-  handleRoleConfirmed: () => void;
-  handleVoteResults: () => void;
-  handleActionResults: () => void;
-  handleCrewSelected: () => void;
-  handleCaptainSelected: () => void;
-  handleCrewSelectionPhase: () => void;
-  handleGameStart: () => void;
-  handleRoomUpdate: (players: Player[]) => void;
-  handlePlayerLeft: (player: Player) => void;
-  handleNewMessage: (message: string) => void;
-  handlePlayerJoined: (player: Player) => void;
-  handleRoleReceived: (role: string) => void;
 }
 
-// Removed HeaderGameProps as it is equivalent to FooterGameProps
 
 export interface RoleDistributionProps {
   role: string;
@@ -136,7 +112,7 @@ export interface VoteCrewPageProps {
   currentUser: string;
   roomCode: string;
   captain: Player;
-  crewMembers: string[];
+  crewMembers: Player[];
   allPlayers: Player[];
   handleVote: (vote: "yes" | "no") => void;
 }
@@ -144,19 +120,17 @@ export interface VoteCrewPageProps {
 
 
 
+export interface HeaderGameProps {
+  avatar: string;
+}
+
 
 export interface SelectCrewPageProps {
-  player: Player[];
+  players: Player[];   
   roomCode: string;
-  username: string;
-  handleCaptainSelected: () => void;
-  handleCrewSelectionPhase: () => void;
-  handleGameStart: () => void;
-  handleRoomUpdate: (players: Player[]) => void;
-  handlePlayerLeft: (player: Player) => void;
-  handleNewMessage: (message: string) => void;
-  handlePlayerJoined: (player: Player) => void;
-  handleRoleReceived: (role: string) => void;
+  username: string;     
+  captainAvatar?: string; 
+  maxCrewSize?: number;
 }
 
 export interface IdentificationSireneProps {

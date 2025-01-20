@@ -159,7 +159,7 @@ wss.on("connection", (ws) => {
           return;
         }
       
-        broadcast(roomCode, { type: "CREW_SELECTION_PHASE", captain: captain.username });
+        broadcast(roomCode, { type: "CREW_SELECTION_PHASE", captain: captain.username, avatar :captain.avatar });
         console.log(`📤 Phase de sélection d'équipage commencée pour la salle ${roomCode}`);
       }
       

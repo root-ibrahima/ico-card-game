@@ -14,49 +14,42 @@ interface PlayerCardProps {
   isCrewMember?: boolean; // Indique si le joueur est un membre d'équipage
   isSelected?: boolean; // Indique si le joueur est sélectionné
   selectionNumber?: number; // Position du joueur dans la sélection
-  voters?: Player[]; // Liste des joueurs ayant voté
 }
 
 const PlayerCard: React.FC<PlayerCardProps> = ({
   player,
   isCaptain = false,
-  isCrewMember = false,
   isSelected = false,
   selectionNumber,
-  
 }) => {
   return (
     <div
-      className={`relative p-4 rounded-lg shadow-md text-center ${
+      className={`relative p-1 rounded-lg shadow-md text-center w-20 h-28 ${
         isSelected ? "bg-blue-200" : "bg-white"
       }`}
     >
       {/* Avatar du joueur */}
-      <Image
-        src={player.avatar}
-        alt={player.username}
-        width={80}
-        height={80}
-        className="object-cover rounded-full mx-auto mb-2"
-      />
+      <div className="w-12 h-12 mx-auto mb-1 rounded-full overflow-hidden">
+        <Image
+          src={player.avatar}
+          alt={player.username}
+          width={56} // Taille réduite pour les images
+          height={56}
+          unoptimized
+          className="rounded-full object-cover"
+        />
+      </div>
 
       {/* Nom du joueur */}
-      <h3 className={`text-sm font-bold ${isCaptain ? "text-blue-600" : ""}`}>
+      <h3 className={`text-xs font-semibold truncate ${isCaptain ? "text-blue-600" : ""}`}>
         {player.username}
-        {isCaptain && " (Capitaine)"}
+        {isCaptain && " (Cap.)"}
       </h3>
 
       {/* Badge pour indiquer la sélection */}
       {isSelected && selectionNumber !== undefined && (
-        <div className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+        <div className="absolute bottom-1 right-1 bg-blue-500 text-white text-[10px] font-bold px-1 py-0.5 rounded-full">
           {selectionNumber}
-        </div>
-      )}
-
-      {/* Badge pour un membre d'équipage */}
-      {isCrewMember && !isCaptain && (
-        <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-          Équipage
         </div>
       )}
     </div>

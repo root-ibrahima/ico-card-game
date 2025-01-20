@@ -1,12 +1,7 @@
 import React from "react";
 import Image from "next/image";
+import { FooterGameProps } from "@/types/index";
 
-interface FooterGameProps {
-  role?: string; // Rôle de l'utilisateur
-  piratePoints: number;
-  marinPoints: number;
-  mancheGagnees: number;
-}
 
 const FooterGame: React.FC<FooterGameProps> = ({
   role = "marin",
@@ -15,7 +10,7 @@ const FooterGame: React.FC<FooterGameProps> = ({
   mancheGagnees = 0,
 }) => {
   // On met en minuscule pour pointer vers la bonne image ou la bonne couleur
-  const roleLowerCase = role.toLowerCase();
+  const roleLowerCase = (role ?? "marin").toLowerCase();
   // Couleur de fond en fonction du rôle
   const footerColor =
     roleLowerCase === "pirate"
