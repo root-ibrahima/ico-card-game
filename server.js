@@ -240,15 +240,18 @@ if (type === "VOTE_CREW" && roomCode) {
     if (!approved) {
       room.failedVotes += 1;
       console.log(`❌ [VOTE_CREW] Équipage rejeté. Nombre d'échecs consécutifs : ${room.failedVotes}`);
-  
+    
       if (room.failedVotes >= 2) {
         console.log(`🔄 [VOTE_CREW] Changement de capitaine après 2 échecs.`);
-        room.failedVotes = 0; // Réinitialise le compteur d'échecs
-        assignCaptain(roomCode); // Change le capitaine
+        room.failedVotes = 0;
+        assignCaptain(roomCode); // On nomme un nouveau capitaine
+      } else {
+        // Tant qu'on n'a pas atteint 2 échecs, on renvoie le même capitaine
+        // à la phase de sélection.
+        broadcast(roomCode, { type: "CREW_SELECTION_PHASE" });
       }
-    } else {
-      room.failedVotes = 0; // Réinitialise le compteur si le vote est approuvé
     }
+    
   
     // Réinitialiser les votes pour la prochaine phase
     room.players.forEach((p) => {
