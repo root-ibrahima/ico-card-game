@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { connectToRoom, disconnectSocket, sendMessageToRoom } from "@/lib/socket";
 import { useRouter, usePathname } from "next/navigation";
-import { RoomEvent } from "@/types/index";
+import { RoomEvent, Player } from "@/types/index";
 import RoleDistribution from "./distribution-roles/page";
 import CaptainChoicePage from "./choix-capitaines/page";
 import SelectCrewPage from "./selection-equipage-capitaine/page";
@@ -11,11 +11,6 @@ import VoteCrewPage from "./vote-equipage/page";
 import FooterGame from "./components/FooterGame";
 import HeaderGame from "./components/HeaderGame";
 import Image from "next/image";
-
-interface Player {
-  username: string;
-  avatar: string;
-}
 
 const GameRoomPage: React.FC = () => {
   const router = useRouter();
@@ -244,7 +239,7 @@ const GameRoomPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-4 gap-4 mb-8">
-              {players.map((player, index) => (
+            {players.map((player, index) => (
                 <div
                   key={index}
                   className="bg-white text-black rounded-lg p-3 flex flex-col items-center shadow-md"
@@ -254,6 +249,7 @@ const GameRoomPage: React.FC = () => {
                     alt={player.username}
                     width={64}
                     height={64}
+                    unoptimized 
                     className="rounded-full mb-2"
                   />
                   <p className={`text-sm font-semibold ${username === player.username ? "text-blue-600" : ""}`}>
