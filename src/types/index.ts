@@ -46,25 +46,28 @@ export type RoomEventType =
   | "SIRENE_IDENTIFIED";
 
 /**
- * 🔹 Interface représentant un événement WebSocket.
+ * 🔹 Interface représentant un événement WebSocket “aplati”.
  */
 export interface RoomEvent {
   type: RoomEventType;
-  payload: {
-    roomCode?: string;
-    message?: string;
-    player?: Player;
-    selectedCrew?: Player[];
-    votesYes?: number;
-    votesNo?: number;
-    approved?: boolean;
-    newCaptain?: string;
-    actions?: { name: string; action: string }[];
-    votes?: { [playerId: string]: number };
-    identifiedSirene?: string;
-    role?: string;
-  };
+  // Champs à plat :
+  roomCode?: string;
+  message?: string;
+  player?: Player;
+  players?: Player[];        
+  selectedCrew?: string[];   
+  votesYes?: number;
+  votesNo?: number;
+  approved?: boolean;
+  newCaptain?: string;
+  captain?: string;       
+  avatar?: string;
+  actions?: { name: string; action: string }[];
+  votes?: { [playerId: string]: number };
+  identifiedSirene?: string;
+  role?: string;       
 }
+
 
 /**
  * 🔹 Props pour le composant `FooterGame`
@@ -105,6 +108,13 @@ export interface FooterGameProps {
 
 // Removed HeaderGameProps as it is equivalent to FooterGameProps
 
+export interface RoleDistributionProps {
+  role: string;
+  username: string;
+  roomCode: string;
+  onConfirmRole: () => void;
+}
+
 export interface CaptainChoicePageProps {
   captainName: string;
   username: string;
@@ -131,11 +141,9 @@ export interface VoteCrewPageProps {
   handleVote: (vote: "yes" | "no") => void;
 }
 
-export interface RoleDistributionProps {
-  role: string;
-  username: string;
-  roomCode: string;
-}
+
+
+
 
 export interface SelectCrewPageProps {
   player: Player[];
