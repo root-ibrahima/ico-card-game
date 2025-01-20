@@ -24,7 +24,6 @@ const RoleDistribution: React.FC<RoleDistributionProps> = ({
       <RoleCard
         role={role}
         description={roleDescriptions[role.toLowerCase()] || "Rôle inconnu"}
-        imageUrl={`/images/roles/${role.toLowerCase()}.png`}
       />
 
       <p className="text-base text-gray-500 mt-6">

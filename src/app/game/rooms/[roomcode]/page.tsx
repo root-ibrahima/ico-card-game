@@ -219,7 +219,12 @@ const GameRoomPage: React.FC = () => {
               </p>
             )}
           </main>
-          <FooterGame role={role || undefined} piratePoints={0} marinPoints={0} mancheGagnees={0} />
+          <FooterGame
+            role={role || "marin"}
+            piratePoints={0}
+            marinPoints={0}
+            mancheGagnees={0}
+          />
         </>
       ) : (
         // Écran avant que la partie ne démarre
