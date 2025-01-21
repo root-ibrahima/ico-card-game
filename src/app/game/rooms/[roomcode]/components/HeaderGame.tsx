@@ -1,15 +1,18 @@
 import { useState } from "react";
 import Image from "next/image";
+import {HeaderGameProps} from "@/types/index";
 
-const HeaderGame: React.FC = () => {
+const HeaderGame: React.FC<HeaderGameProps> = ({
+ avatar,
+}) => {
   const [showConfirm, setShowConfirm] = useState(false);
-
   const handleQuit = () => {
     setShowConfirm(false); // Ferme le modal
+    console.log("avatar", avatar);
     // Redirection ou toute autre logique pour quitter la partie
     window.location.href = "/";
   };
-
+  console.log("avatar", avatar);
   return (
     <header className="relative flex justify-between items-center p-4 bg-white shadow-md">
       {/* Bouton quitter la partie */}
@@ -37,10 +40,11 @@ const HeaderGame: React.FC = () => {
       {/* Photo de profil */}
       <div className="w-10 h-10 rounded-full overflow-hidden">
         <Image
-          src="/profile.png" // Chemin de l'image du profil
+          src={avatar} // Chemin de l'image du profil
           alt="Photo de profil"
           width={40}
           height={40}
+          unoptimized
         />
       </div>
 

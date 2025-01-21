@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+
 interface PlayerCardProps {
   player: { username: string; avatar: string };
   isSelected: boolean;
@@ -16,18 +17,33 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative cursor-pointer p-4 rounded-lg shadow-md text-center transition ${
-        isSelected ? "bg-blue-200" : "bg-white"
-      }`}
+      className={`relative cursor-pointer w-28 h-auto flex flex-col items-center p-2 
+        rounded-xl shadow-sm text-center 
+        transition-all duration-300 
+        ${
+          isSelected
+            ? "bg-blue-100 scale-105" // Fond bleu pâle quand sélectionné
+            : "bg-[#FFF8F2]"         // Fond crème par défaut
+        }`}
     >
-      <Image
-        src={player.avatar}
-        alt={player.username}
-        className="w-20 h-20 object-cover rounded-full mx-auto mb-2"
-      />
-      <h3 className="text-sm font-bold">{player.username}</h3>
+      {/* Avatar joueur */}
+      <div className="relative w-12 h-12 mb-2">
+        <Image
+          src={player.avatar}
+          alt={player.username}
+          width={64}
+          height={64}
+          unoptimized
+          className="rounded-full object-cover"
+        />
+      </div>
+
+      {/* Nom du joueur */}
+      <h3 className="text-sm font-semibold text-gray-800">{player.username}</h3>
+
+      {/* Indicateur d'ordre de sélection */}
       {isSelected && (
-        <div className="absolute bottom-2 right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+        <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
           {selectionNumber}
         </div>
       )}
