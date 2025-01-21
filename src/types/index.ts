@@ -16,6 +16,7 @@ export interface Player {
   isSelected?: boolean; // Indique si le joueur est sélectionné
   selectionNumber?: number; // Position du joueur dans la sélection
   voters?: Player[]; // Liste des joueurs ayant voté
+  currentAction?: "ile" | "poison" | null;
 }
 
 /**
@@ -47,7 +48,10 @@ export type RoomEventType =
   | "ACTION_SELECTION"
   | "ACTION_RESULTS"
   | "SIRENE_VOTE_UPDATE"
-  | "SIRENE_IDENTIFIED";
+  | "SIRENE_IDENTIFIED"
+  | "ACTION_SUBMITTED"
+  | "ACTIONS_REVEALED"
+  | "ACTION_SELECTION_PHASE" ;
 
 /**
  * 🔹 Interface représentant un événement WebSocket “aplati”.
@@ -66,10 +70,12 @@ export interface RoomEvent {
   newCaptain?: string;
   captain?: string;       
   avatar?: string;
-  actions?: { name: string; action: string }[];
   votes?: { [playerId: string]: number };
   identifiedSirene?: string;
-  role?: string;       
+  role?: string;      
+  actions?: { username: string; action: "ile" | "poison" }[];
+  winningSide?: "pirates" | "marins";
+  action?: "ile" | "poison"; 
 }
 
 

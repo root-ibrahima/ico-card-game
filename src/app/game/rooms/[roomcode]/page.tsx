@@ -9,6 +9,8 @@ import RoleDistribution from "./distribution-roles/page";
 import CaptainChoicePage from "./choix-capitaines/page";
 import SelectCrewPage from "./selection-equipage-capitaine/page";
 import VoteCrewPage from "./vote-equipage/page";
+import ChoixActionsPage from "./choix-action/page";
+import ChoixActionsRevelationsPage from "./choix-actions-revelations/page";
 import FooterGame from "./components/FooterGame";
 import HeaderGame from "./components/HeaderGame";
 import Image from "next/image";
@@ -38,6 +40,13 @@ const GameRoomPage: React.FC = () => {
   // Votes
   const [votePhase, setVotePhase] = useState(false);
   const [voteResult, setVoteResult] = useState<boolean | null>(null);
+
+  //Choix des actions
+  const [actionSelectionPhase, setActionSelectionPhase] = useState(false);
+  const [actionsRevealed, setActionsRevealed] = useState<
+    { username: string; action: "ile" | "poison" }[]
+  >([]);
+  const [winningSide, setWinningSide] = useState<"pirates" | "marins" | null>(null);
 
   // Chargement ou non de la page
   const [loading, setLoading] = useState(true);
@@ -136,6 +145,18 @@ const GameRoomPage: React.FC = () => {
           setVoteResult(data.approved || false);
           break;
         }
+        case "ACTION_SELECTION_PHASE":
+        setVoteResult(null);
+        setActionSelectionPhase(true);
+        break;
+
+        case "ACTIONS_REVEALED":
+        setActionSelectionPhase(false);
+        setActionsRevealed(data.actions || []);
+        setWinningSide(data.winningSide || null);
+        break;
+
+
 
         default:
           console.warn("⚠️ Événement inattendu :", data);
@@ -169,6 +190,8 @@ const GameRoomPage: React.FC = () => {
   console.log("Capitaine =", currentCaptain);
   console.log("crewSelectionPhase =", crewSelectionPhase);
   console.log("voteResult =", voteResult);
+  console.log("actionSelectionPhase =", actionSelectionPhase);
+  console.log("actionsRevealed =", players.filter((p) => p.isCrewMember));
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
@@ -202,6 +225,22 @@ const GameRoomPage: React.FC = () => {
                   </p>
                 </div>
               )
+            ) : actionsRevealed.length > 0 ? (
+              // Phase : révélation des actions
+              <ChoixActionsRevelationsPage
+              actions={actionsRevealed}
+              players={players.filter((player) => player.isCrewMember)} // Ne transmettre que les membres de l'équipage
+              winningSide={winningSide}
+              />
+
+            ) : actionSelectionPhase ? (
+              // Phase : sélection d'actions (uniquement pour les membres de l'équipage)
+              <ChoixActionsPage
+                currentUser={username}
+                crewMembers={players.filter((p) => p.isCrewMember)}
+                role={role || "marin"}
+                roomCode={roomCode || ""}
+              />
             ) : currentCaptain && !crewSelectionPhase && !votePhase ? (
               // Phase : le capitaine doit valider son statut
               <CaptainChoicePage

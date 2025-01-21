@@ -85,9 +85,15 @@ wss.on("connection", (ws) => {
         }
       
         console.log(`👥 ${username} a rejoint la salle ${roomCode}`);
-        const playersList = rooms[roomCode].players.map(({ username, avatar }) => ({
-          username,
-          avatar,
+        
+        const playersList = rooms[roomCode].players.map((player) => ({
+          username: player.username,
+          avatar: player.avatar,
+          isCaptain: player.isCaptain,
+          isCrewMember: player.isCrewMember, // on ajoute
+          role: player.role,                 // si utile pour le front
+          piratePoints: player.piratePoints, // etc.
+          marinPoints: player.marinPoints,
         }));
         broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
       }
@@ -168,24 +174,55 @@ wss.on("connection", (ws) => {
       console.log("📩 Roomcode :", roomCode);
       console.log("📩 Type :", type);
   
-      if (type === "CREW_SELECTED" && roomCode) {
+      if (type === "CREW_SELECTED") {
         console.log(`📤 Équipage sélectionné pour la salle ${roomCode}:`, selectedCrew);
-  
+    
         if (!rooms[roomCode]) {
-          console.error(`❌ Salle introuvable : ${roomCode}`);
-          return;
+            console.error(`❌ Salle introuvable : ${roomCode}`);
+            return;
         }
-  
-        // Diffuser un ROOM_UPDATE si nécessaire pour synchroniser la liste des joueurs
-        const playersList = rooms[roomCode].players.map(({ username, avatar }) => ({
-          username,
-          avatar,
-        }));
-        broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
-  
-        // Diffuser CREW_SELECTED
-        broadcast(roomCode, { type: "CREW_SELECTED", selectedCrew });
-      }
+    
+        const room = rooms[roomCode];
+        const playersInRoom = room.players;
+    
+        if (!playersInRoom) {
+            console.error(`❌ Aucun joueur trouvé dans la salle ${roomCode}`);
+            return;
+        }
+    
+        // Mise à jour des membres sélectionnés
+        room.selectedCrew = selectedCrew;
+    
+        // Si nécessaire, vérifie si les `selectedCrew` sont bien des joueurs existants
+        const validCrew = selectedCrew.filter((crewMember) =>
+            playersInRoom.some((p) => p.username === crewMember)
+        );
+    
+        if (validCrew.length !== selectedCrew.length) {
+            console.error("❌ Des membres sélectionnés ne sont pas valides :", selectedCrew);
+            return;
+        }
+        room.players.forEach((p) => {
+          p.isCrewMember = selectedCrew.includes(p.username);
+        });
+        console.log(`✅ Équipage valide sélectionné :`, validCrew);
+        room.crewActionsCount = 0; // Réinitialiser le compteur d'actions d'équipage
+        // Broadcast pour informer les autres joueurs
+        broadcast(roomCode, { type: "CREW_SELECTED", selectedCrew: validCrew });
+        // Rediffuser une liste complète des joueurs
+        const playersList = room.players.map((pl) => ({
+            username: pl.username,
+            avatar: pl.avatar,
+            isCrewMember: pl.isCrewMember,
+            role: pl.role,
+            piratePoints: pl.piratePoints,
+            marinPoints: pl.marinPoints,
+           }));
+         broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
+    
+       
+    }
+    
   
       // Gestion du vote d'équipage
   // Gestion du vote d'équipage
@@ -215,6 +252,8 @@ if (type === "VOTE_CREW" && roomCode) {
 
   console.log(totalVotesNeeded);
   console.log(votesReceived);
+
+
 
   if (votesReceived === totalVotesNeeded) {
     console.log(`✅ [VOTE_CREW] Tous les votes nécessaires ont été reçus dans la salle ${roomCode}`);
@@ -251,6 +290,9 @@ if (type === "VOTE_CREW" && roomCode) {
         broadcast(roomCode, { type: "CREW_SELECTION_PHASE" });
       }
     }
+    else {
+      broadcast(roomCode, { type: "ACTION_SELECTION_PHASE" });
+    }
     
   
     // Réinitialiser les votes pour la prochaine phase
@@ -266,7 +308,47 @@ if (type === "VOTE_CREW" && roomCode) {
     );
   }
 }
+if (type === "ACTION_SUBMITTED" && roomCode) {
+  const { action } = data;
+  const room = rooms[roomCode];
+  console.log(`📩 [ACTION_SUBMITTED] Reçu pour la salle ${roomCode} de la part de ${username}`);
+  if (!room) return;
 
+  const player = room.players.find((p) => p.username === username);
+  if (!player) return;
+
+  // Vérifie d’abord si c'est un membre de l'équipage
+  if (!player.isCrewMember) {
+    console.log(`❌ [ACTION_SUBMITTED] ${username} n'est pas dans l'équipage`);
+    return;
+  }
+  else {
+    console.log(`✅ [ACTION_SUBMITTED] ${username} est dans l'équipage`);
+  }
+  console.log(`📩 [ACTION_SUBMITTED] ${username} a choisi ${action}`);
+  // Si le joueur n'avait pas déjà choisi
+  if (!player.currentAction) {
+    player.currentAction = action;
+    console.log(`🛠️ [ACTION_SUBMITTED] ${username} a choisi ${action}`);
+
+    // Incrémente le compteur
+    room.crewActionsCount = (room.crewActionsCount || 0) + 1;
+    console.log(
+      `🔢 [ACTION_SUBMITTED] Incrémentation du compteur => ${room.crewActionsCount}`
+    );
+    console.log(`🔢 [ACTION_SUBMITTED] Nombre total de joueurs dans l'équipage : ${room.crewActionsCount}`);
+    // Si on a atteint 3 joueurs => tous ont choisi
+    if (room.crewActionsCount === 3) {
+      console.log(`✅ [ACTION_SUBMITTED] Les 3 membres ont choisi !`);
+      // Calcule le résultat
+      revealActions(roomCode);
+    }
+  } else {
+    console.log(
+      `⚠️ [ACTION_SUBMITTED] ${username} avait déjà choisi ${player.currentAction}`
+    );
+  }
+}
       
            
     } catch (error) {
@@ -401,4 +483,56 @@ function handlePlayerDisconnection(ws) {
       broadcast(roomCode, { type: "ROOM_UPDATE", players: playersList });
     }
   });
+}
+
+function revealActions(roomCode) {
+  const room = rooms[roomCode];
+  if (!room) return;
+
+  // Récupère les membres de l'équipage
+  const crew = room.players.filter((p) => p.isCrewMember);
+
+  // Compte le nombre de poison
+  const poisonCount = crew.filter((p) => p.currentAction === "poison").length;
+  const hasPoison = poisonCount > 0;
+
+  // Incrémente les points
+  if (hasPoison) {
+    // +1 Pirates
+    room.players.forEach((pl) => {
+      if (pl.role?.toLowerCase() === "pirate") {
+        pl.piratePoints = (pl.piratePoints || 0) + 1;
+      }
+    });
+    console.log(`🏴‍☠️ [revealActions] Au moins un Poison : Pirates +1`);
+  } else {
+    // +1 Marins
+    room.players.forEach((pl) => {
+      if (pl.role?.toLowerCase() === "marin") {
+        pl.marinPoints = (pl.marinPoints || 0) + 1;
+      }
+    });
+    console.log(`⚓ [revealActions] 3 Îles : Marins +1`);
+  }
+
+  // Prépare la liste des actions
+  const actions = crew.map((p) => ({
+    username: p.username,
+    action: p.currentAction,
+  }));
+
+  const winningSide = hasPoison ? "pirates" : "marins";
+
+  broadcast(roomCode, {
+    type: "ACTIONS_REVEALED",
+    actions,
+    winningSide,
+  });
+
+  console.log(`📤 [revealActions] ACTIONS_REVEALED :`, { actions, winningSide });
+
+  // Reset
+  room.players.forEach((p) => (p.currentAction = null));
+  room.crewActionsCount = 0;
+  console.log(`♻️ [revealActions] Remise à zéro de currentAction et crewActionsCount`);
 }
