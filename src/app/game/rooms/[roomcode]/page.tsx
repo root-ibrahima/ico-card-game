@@ -172,15 +172,15 @@ const GameRoomPage: React.FC = () => {
         setTotalPiratePoints(data.piratesScore || 0);
         break;
 
-        case "GAME_END":
-        // Afficher la page de victoire
-        setGameOver(true);
-        setFinalScores({
-          pirates: data.piratesScore ?? 0,
-          marins: data.marinsScore ?? 0,
-          winner: data.winner as "pirates" | "marins",
-        });
-        break;
+        // case "GAME_END":
+        // // Afficher la page de victoire
+        // setGameOver(true);
+        // setFinalScores({
+        //   pirates: data.piratesScore ?? 0,
+        //   marins: data.marinsScore ?? 0,
+        //   winner: data.winner as "pirates" | "marins",
+        // });
+        // break;
 
 
 
@@ -231,16 +231,6 @@ const GameRoomPage: React.FC = () => {
           />
 
           <main className="flex-grow flex flex-col items-center justify-center bg-white">
-            {/*
-              Ordre des conditions :
-              1. Si on a un résultat de vote => message Accepter/Rejeté
-              2. Sinon, si on a un currentCaptain ET pas encore la phase "sélection équipage"
-                 => afficher la page de choix capitaine
-              3. Si "crewSelectionPhase" est enclenchée, on va vers la page de sélection d'équipage
-              4. Si "votePhase" => page de vote
-              5. Sinon, on gère la distribution des rôles ou "chargement"
-            */}
-
             {voteResult !== null ? (
               voteResult ? (
                 <div className="w-full max-w-md p-6 text-white text-center bg-green-500">
@@ -396,11 +386,17 @@ const GameRoomPage: React.FC = () => {
               Les autres joueurs peuvent entrer ce code pour rejoindre la partie.
             </p>
             <button
-              onClick={startGame}
-              className="bg-white text-blue-600 font-bold py-3 px-6 rounded-full shadow-lg"
-            >
-              Commencer la partie
-            </button>
+            onClick={startGame}
+            disabled={players.length < 7} // Désactiver si moins de 7 joueurs
+            className={`font-bold py-3 px-6 rounded-full shadow-lg ${
+              players.length < 7
+                ? "bg-gray-400 text-gray-700 cursor-not-allowed" // Style grisé
+                : "bg-white text-blue-600 cursor-pointer" // Style normal
+            }`}
+          >
+            Commencer la partie
+          </button>
+
           </main>
         </>
       )}
