@@ -51,7 +51,8 @@ export type RoomEventType =
   | "SIRENE_IDENTIFIED"
   | "ACTION_SUBMITTED"
   | "ACTIONS_REVEALED"
-  | "ACTION_SELECTION_PHASE" ;
+  | "ACTION_SELECTION_PHASE" 
+  | "GAME_END";
 
 /**
  * 🔹 Interface représentant un événement WebSocket “aplati”.
@@ -76,6 +77,9 @@ export interface RoomEvent {
   actions?: { username: string; action: "ile" | "poison" }[];
   winningSide?: "pirates" | "marins";
   action?: "ile" | "poison"; 
+  piratesScore?: number;
+  marinsScore?: number;
+  winner: string;
 }
 
 

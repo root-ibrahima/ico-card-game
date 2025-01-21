@@ -36,6 +36,7 @@ const GameRoomPage: React.FC = () => {
   const [isCaptain, setIsCaptain] = useState(false);
   const [crewSelectionPhase, setCrewSelectionPhase] = useState(false);
   const [crewMembers, setCrewMembers] = useState<string[]>([]);
+  
 
   // Votes
   const [votePhase, setVotePhase] = useState(false);
@@ -47,6 +48,16 @@ const GameRoomPage: React.FC = () => {
     { username: string; action: "ile" | "poison" }[]
   >([]);
   const [winningSide, setWinningSide] = useState<"pirates" | "marins" | null>(null);
+  const [totalPiratePoints, setTotalPiratePoints] = useState(0);  
+  const [totalMarinPoints,  setTotalMarinPoints] = useState(0); 
+
+  // Fin de partie
+  // const [gameOver, setGameOver] = useState(false);
+  // const [finalScores, setFinalScores] = useState<{
+  //   pirates: number;
+  //   marins: number;
+  //   winner: "pirates" | "marins";
+  // } | null>(null);
 
   // Chargement ou non de la page
   const [loading, setLoading] = useState(true);
@@ -109,16 +120,19 @@ const GameRoomPage: React.FC = () => {
           break;
         }
 
-        case "CAPTAIN_SELECTED": {
-          // Nouveau capitaine désigné
+        case "CAPTAIN_SELECTED":
           setCurrentCaptain(data.captain || null);
           setIsCaptain(data.captain === username);
 
-          // On réinitialise le voteResult si c'était "false"
+          // On sort de l’écran de révélations en réinitialisant
+          setActionsRevealed([]); 
+          setWinningSide(null);
+
+          // Éventuellement, on réinitialise voteResult, etc.
           setVoteResult(null);
 
           break;
-        }
+
 
         case "CREW_SELECTION_PHASE": {
           // Une fois que le capitaine a confirmé son statut,
@@ -154,6 +168,18 @@ const GameRoomPage: React.FC = () => {
         setActionSelectionPhase(false);
         setActionsRevealed(data.actions || []);
         setWinningSide(data.winningSide || null);
+        setTotalMarinPoints(data.marinsScore || 0);
+        setTotalPiratePoints(data.piratesScore || 0);
+        break;
+
+        case "GAME_END":
+        // Afficher la page de victoire
+        setGameOver(true);
+        setFinalScores({
+          pirates: data.piratesScore ?? 0,
+          marins: data.marinsScore ?? 0,
+          winner: data.winner as "pirates" | "marins",
+        });
         break;
 
 
@@ -182,6 +208,9 @@ const GameRoomPage: React.FC = () => {
       sendMessageToRoom(username, roomCode, "ROLE_CONFIRMED");
     }
   };
+
+
+
 
   // --- Rendu ---
   if (loading) return <p className="text-white">Chargement...</p>;
@@ -312,10 +341,10 @@ const GameRoomPage: React.FC = () => {
           </main>
 
           <FooterGame
-            role={role || "marin"}
-            piratePoints={0}
-            marinPoints={0}
-            mancheGagnees={0}
+           role={role || "marin"}
+           piratePoints={totalPiratePoints}
+           marinPoints={totalMarinPoints}
+           mancheGagnees={0}
           />
         </>
       ) : (

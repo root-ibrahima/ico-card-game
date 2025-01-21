@@ -36,7 +36,10 @@ wss.on("connection", (ws) => {
             rooms[roomCode] = {
               players: [],
               currentCaptainIndex: 0,
-              failedVotes: 0, // Compteur pour les votes échoués
+              failedVotes: 0,
+              currentRound: 1,           // Numéro du tour en cours
+              maxRounds: 10,             // Nombre maximum de tours
+              usedCaptains: [] // Compteur pour les votes échoués
             };
           }
         } else if (createNewRoom) {
@@ -382,33 +385,45 @@ function findExistingRoom() {
   return null;
 }
 
-function assignRoles(roomCode) {
+function assignCaptain(roomCode) {
   const room = rooms[roomCode];
-  if (!room || room.players.length !== 5) {
-    console.error(`❌ Impossible d'attribuer les rôles : salle ${roomCode} invalide ou incomplète.`);
+  if (!room || room.players.length === 0) {
+    console.error(`❌ Pas de joueurs dans la salle ${roomCode}`);
     return;
   }
 
-  const roles = ["Marin", "Marin", "Marin", "Pirate", "Pirate"].sort(() => Math.random() - 0.5);
-  console.log(`🎲 Rôles générés pour la salle ${roomCode} : ${roles.join(", ")}`);
+  // Filtrer les joueurs qui n'ont jamais été capitaine
+  const availablePlayers = room.players.filter(
+    (p) => !room.usedCaptains.includes(p.username)
+  );
 
-  room.players.forEach((player, index) => {
-    const role = roles[index];
-    player.role = role;
+  if (availablePlayers.length === 0) {
+    console.log("⚠️ Tous les joueurs ont déjà été capitaines, on réinitialise la liste.");
+    room.usedCaptains = [];
+    // On relance la fonction en boucle pour forcer un choix
+    return assignCaptain(roomCode);
+  }
 
-    if (player.ws.readyState === WebSocket.OPEN) {
-      const message = {
-        type: "YOUR_ROLE",
-        role,
-      };
-      console.log(`📤 Envoi du rôle à ${player.username} :`, message);
-      player.ws.send(JSON.stringify(message));
-    } else {
-      console.warn(`⚠️ Connexion WebSocket fermée pour ${player.username}, rôle non envoyé.`);
-    }
-    console.log(`🎭 Rôle attribué : ${player.username} → ${role}`);
+  // Choisir le premier ou un hasard
+  const newCaptain = availablePlayers[0]; 
+
+
+  // Marquer tous isCaptain = false, sauf newCaptain
+  room.players.forEach((player) => {
+    player.isCaptain = player.username === newCaptain.username;
+  });
+
+  // Ajouter ce capitaine à la liste usedCaptains
+  room.usedCaptains.push(newCaptain.username);
+
+  console.log(`👑 Nouveau capitaine : ${newCaptain.username}`);
+  broadcast(roomCode, {
+    type: "CAPTAIN_SELECTED",
+    captain: newCaptain.username,
+    avatar: newCaptain.avatar,
   });
 }
+
 
 
 /**
@@ -492,27 +507,23 @@ function revealActions(roomCode) {
   // Récupère les membres de l'équipage
   const crew = room.players.filter((p) => p.isCrewMember);
 
-  // Compte le nombre de poison
+  // Compte le nombre de "poison" et "île"
   const poisonCount = crew.filter((p) => p.currentAction === "poison").length;
-  const hasPoison = poisonCount > 0;
 
-  // Incrémente les points
+  const hasPoison = poisonCount > 0; // Si au moins un poison
+  const winningSide = hasPoison ? "pirates" : "marins";
+
+  // Initialisation des scores si ce n'est pas déjà fait
+  room.piratesScore = room.piratesScore || 0;
+  room.marinsScore = room.marinsScore || 0;
+
+  // Mise à jour des scores en fonction des actions
   if (hasPoison) {
-    // +1 Pirates
-    room.players.forEach((pl) => {
-      if (pl.role?.toLowerCase() === "pirate") {
-        pl.piratePoints = (pl.piratePoints || 0) + 1;
-      }
-    });
-    console.log(`🏴‍☠️ [revealActions] Au moins un Poison : Pirates +1`);
+    room.piratesScore += 1;
+    console.log(`🏴‍☠️ [revealActions] Poison(s) détecté(s) : Pirates +1`);
   } else {
-    // +1 Marins
-    room.players.forEach((pl) => {
-      if (pl.role?.toLowerCase() === "marin") {
-        pl.marinPoints = (pl.marinPoints || 0) + 1;
-      }
-    });
-    console.log(`⚓ [revealActions] 3 Îles : Marins +1`);
+    room.marinsScore += 1;
+    console.log(`⚓ [revealActions] Aucune poison : Marins +1`);
   }
 
   // Prépare la liste des actions
@@ -521,18 +532,125 @@ function revealActions(roomCode) {
     action: p.currentAction,
   }));
 
-  const winningSide = hasPoison ? "pirates" : "marins";
+  // Diffuse les résultats et scores
+  const piratesScore = room.players
+    .filter((p) => p.role === "Pirate")
+    .reduce((sum, p) => sum + (p.piratePoints || 0), 0);
 
-  broadcast(roomCode, {
-    type: "ACTIONS_REVEALED",
+  const marinsScore = room.players
+    .filter((p) => p.role === "Marin")
+    .reduce((sum, p) => sum + (p.marinPoints || 0), 0);
+
+    broadcast(roomCode, {
+      type: "ACTIONS_REVEALED",
+      actions,
+      winningSide,
+      piratesScore: room.piratesScore,
+      marinsScore: room.marinsScore,
+    });
+
+  console.log(`📤 [revealActions] ACTIONS_REVEALED :`, {
     actions,
     winningSide,
+    piratesScore,
+    marinsScore,
   });
 
-  console.log(`📤 [revealActions] ACTIONS_REVEALED :`, { actions, winningSide });
-
-  // Reset
+  // Reset des actions
   room.players.forEach((p) => (p.currentAction = null));
   room.crewActionsCount = 0;
   console.log(`♻️ [revealActions] Remise à zéro de currentAction et crewActionsCount`);
+
+  // Préparer la prochaine phase
+  console.log('nombre de manches jouées', room.currentRound);
+  setTimeout(() => {
+    // Incrémenter le round
+    room.currentRound += 1;
+    console.log(`🔄 Fin du tour ${room.currentRound - 1}, on passe au tour ${room.currentRound}`);
+
+    // Vérifier si on a atteint le maxRounds
+    if (room.currentRound > room.maxRounds) {
+      // Fin de la partie
+      endGame(roomCode);
+    } else {
+      // Préparer un nouveau tour
+      resetForNewRound(room);
+      assignCaptain(roomCode);
+    }
+  }, 3000);
+}
+
+
+function endGame(roomCode) {
+  const room = rooms[roomCode];
+  if (!room) return;
+
+  console.log(`🏆 [endGame] La partie dans la salle ${roomCode} est terminée !`);
+
+  // On pourrait calculer le score final (piratePoints vs marinPoints)
+  const piratesScore = room.players
+    .filter((p) => p.role === "Pirate")
+    .reduce((sum, p) => sum + (p.piratePoints || 0), 0);
+  const marinsScore = room.players
+    .filter((p) => p.role === "Marin")
+    .reduce((sum, p) => sum + (p.marinPoints || 0), 0);
+
+  let winner = "";
+  if (piratesScore > marinsScore) {
+    winner = "pirates";
+  } else if (marinsScore > piratesScore) {
+    winner = "marins";
+  } else {
+    winner = "égalité";
+  }
+
+  broadcast(roomCode, {
+    type: "GAME_END",
+    piratesScore,
+    marinsScore,
+    winner,
+  });
+
+  // Option : on peut laisser la salle ouverte ou la supprimer
+  // delete rooms[roomCode];
+}
+
+
+function resetForNewRound(room) {
+  room.players.forEach((p) => {
+    p.isCrewMember = false;
+    p.roleConfirmed = true; // si vous ne refaites pas de distribution
+    p.currentAction = null;
+    delete p.vote;
+  });
+  room.crewActionsCount = 0;
+  room.failedVotes = 0; // Si vous voulez un nouveau cycle de votes
+}
+
+function assignRoles(roomCode) {
+  const room = rooms[roomCode];
+  if (!room || room.players.length !== 5) {
+    console.error(`❌ Impossible d'attribuer les rôles : salle ${roomCode} invalide ou incomplète.`);
+    return;
+  }
+
+  const roles = ["Marin", "Marin", "Marin", "Pirate", "Pirate"].sort(() => Math.random() - 0.5);
+  console.log(`🎲 Rôles générés pour la salle ${roomCode} : ${roles.join(", ")}`);
+
+  room.players.forEach((player, index) => {
+    const role = roles[index];
+    player.role = role;
+
+    if (player.ws.readyState === WebSocket.OPEN) {
+      const message = {
+        type: "YOUR_ROLE",
+        role,
+      };
+      console.log(`📤 Envoi du rôle à ${player.username} :`, message);
+      player.ws.send(JSON.stringify(message));
+    } else {
+      console.warn(`⚠️ Connexion WebSocket fermée pour ${player.username}, rôle non envoyé.`);
+    }
+    console.log(`🎭 Rôle attribué : ${player.username} → ${role}`);
+  });
 }
