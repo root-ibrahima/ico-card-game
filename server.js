@@ -629,14 +629,26 @@ function resetForNewRound(room) {
 
 function assignRoles(roomCode) {
   const room = rooms[roomCode];
-  if (!room || room.players.length !== 5) {
-    console.error(`❌ Impossible d'attribuer les rôles : salle ${roomCode} invalide ou incomplète.`);
+  if (!room || room.players.length < 7 || room.players.length > 20) {
+    console.error(`❌ Nombre de joueurs invalide dans la salle ${roomCode}.`);
     return;
   }
 
-  const roles = ["Marin", "Marin", "Marin", "Pirate", "Pirate"].sort(() => Math.random() - 0.5);
-  console.log(`🎲 Rôles générés pour la salle ${roomCode} : ${roles.join(", ")}`);
+  const totalPlayers = room.players.length;
 
+  // Calculer le nombre de rôles nécessaires
+  const numPirates = Math.floor(totalPlayers / 3); // Environ 1/3 des joueurs sont des pirates
+  const numMarins = totalPlayers - numPirates; // Le reste sont des marins
+
+  // Créer les rôles en conséquence
+  const roles = [
+    ...Array(numMarins).fill("Marin"),
+    ...Array(numPirates).fill("Pirate"),
+  ].sort(() => Math.random() - 0.5); // Mélanger les rôles
+
+  console.log(`🎲 Rôles générés pour la salle ${roomCode} :`, roles);
+
+  // Assigner les rôles aux joueurs
   room.players.forEach((player, index) => {
     const role = roles[index];
     player.role = role;
@@ -651,6 +663,8 @@ function assignRoles(roomCode) {
     } else {
       console.warn(`⚠️ Connexion WebSocket fermée pour ${player.username}, rôle non envoyé.`);
     }
+
     console.log(`🎭 Rôle attribué : ${player.username} → ${role}`);
   });
 }
+
