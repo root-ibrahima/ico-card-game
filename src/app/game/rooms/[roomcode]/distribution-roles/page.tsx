@@ -37,7 +37,7 @@ const RoleDistribution: React.FC<RoleDistributionProps> = ({
         onClick={onConfirmRole}
         className="mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
-        ✅ J'ai compris mon rôle
+        ✅ J&apos;ai compris mon rôle
       </button>
     </div>
   );
