@@ -5,8 +5,6 @@ export async function GET(request: NextRequest) {
     try {
         const token = request.cookies.get("access_token")?.value;
 
-        console.log("Debug: Token received in /api/auth/user:", token);
-
         if (!token) {
             return NextResponse.json({ error: "Token is missing" }, { status: 401 });
         }
@@ -21,7 +19,7 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(data.user, { status: 200 });
     } catch (error) {
-        console.error("Debug: Error in /api/auth/user:", error);
+        console.error("Internal server error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

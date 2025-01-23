@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import React from "react";
+import Image from 'next/image';
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('');
@@ -63,10 +64,11 @@ export default function RegisterPage() {
             <div className="relative h-full flex flex-col items-center justify-center">
                 {/* Logo outside white box */}
                 <div className="flex flex-col items-center mb-7">
-                    <img
-                        src="./img/ICO_LOGO 1.png"
+                    <Image
+                        src="/img/ICO_LOGO 1.png"
                         alt="Logo ICO"
-                        className="w-60 h-auto"
+                        width={240}
+                        height={240}
                     />
                     <h1 className="text-white text-3xl font-bold">
                         Rejoignez l&apos;aventure ICO !
@@ -202,18 +204,15 @@ export default function RegisterPage() {
 
                     <div className="text-center text-sm mt-4">
                         Vous avez déjà un compte ?
-                        <Link href="/auth/signin" className="text-blue-500 hover:underline ml-1">
+                        <Link href="/signin" className="text-blue-500 hover:underline ml-1">
                             Connectez-vous !
                         </Link>
-                    </div>
-
-                    <p className="text-xs text-center text-gray-500 mt-4">
                         En cliquant sur S&apos;inscrire, vous acceptez nos{' '}
                         <Link href="#" className="text-blue-500 hover:underline">
                             conditions d&apos;utilisation
                         </Link>
                         .
-                    </p>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,6 +1,8 @@
 import { RoomEvent } from "@/types/index";
 
 let socket: WebSocket | null = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 /**
  * 📡 Connecte un utilisateur à une room spécifique et écoute les messages WebSocket.
@@ -21,17 +23,29 @@ export const connectToRoom = (
 
   socket.onopen = () => {
     console.log(`✅ WebSocket connecté pour la salle : ${roomCode}`);
+    reconnectAttempts = 0; // Réinitialisation des tentatives de reconnexion
 
     const avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`;
 
-    socket?.send(
-      JSON.stringify({
-        type: "JOIN_ROOM",
-        roomCode, // ✅ Assurer que la room est bien celle de l'URL
-        username,
-        avatar,
-      })
-    );
+    try {
+      socket?.send(
+        JSON.stringify({
+          type: "JOIN_ROOM",
+          roomCode,
+          username,
+          avatar,
+        })
+      );
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi du message JOIN_ROOM :", error);
+    }
+
+    // Ajout d'un ping périodique pour maintenir la connexion WebSocket ouverte
+    setInterval(() => {
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "PING" }));
+      }
+    }, 30000); // Envoi un ping toutes les 30 secondes
   };
 
   socket.onmessage = (event) => {
@@ -54,23 +68,44 @@ export const connectToRoom = (
   };
 
   socket.onclose = () => {
-    console.log("🛑 Connexion WebSocket fermée");
-    socket = null;
+    console.warn("🛑 Connexion WebSocket fermée");
+
+    // Tentative de reconnexion en cas de déconnexion
+    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      console.log(`🔄 Tentative de reconnexion (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})...`);
+      reconnectAttempts++;
+      setTimeout(() => connectToRoom(roomCode, username, onMessage), 2000);
+    } else {
+      console.error("❌ Impossible de se reconnecter au WebSocket après plusieurs tentatives.");
+      socket = null;
+    }
   };
 };
 
 /**
  * 📨 Envoie un message dans la room via WebSocket.
  */
-export const sendMessageToRoom = (roomCode: string, message: string) => {
+export const sendMessageToRoom = (
+  username: string,
+  roomCode: string,
+  type: string,
+  additionalData?: Record<string, unknown> 
+) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(
-      JSON.stringify({
-        type: "NEW_MESSAGE",
+    try {
+      const message = {
+        type,
+        username,
         roomCode,
-        message,
-      })
-    );
+        ...additionalData,
+      };
+
+      console.log("📤 Message envoyé :", message);
+
+      socket.send(JSON.stringify(message));
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi du message :", error);
+    }
   } else {
     console.error("❌ WebSocket non connecté, impossible d'envoyer le message.");
   }

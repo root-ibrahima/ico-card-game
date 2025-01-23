@@ -1,10 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// 🔹 **Modèle `User`** : Représente un utilisateur avec ses relations
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String
+  password  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  players     Player[]
+  hostedRooms Room[]     @relation("HostRooms") // ✅ Un utilisateur peut héberger plusieurs salles
+  sessions    Session? // ✅ Un utilisateur peut avoir une session
+  memberRooms UserRoom[] // ✅ Relation Many-to-Many via une table pivot
+}
+
+/// 🔹 **Modèle `Room`** : Définit les salles de jeu et les relations avec les joueurs
+model Room {
+  id        String     @id @default(uuid())
+  sessionId String?    @unique
+  hostId    String
+  status    RoomStatus @default(WAITING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  players Player[]
+  host    User       @relation("HostRooms", fields: [hostId], references: [id], onDelete: Cascade)
+  members UserRoom[] // ✅ Relation Many-to-Many via une table pivot
+}
+
+/// 🔹 **Table pivot `UserRoom`** pour gérer `User` <-> `Room`
+model UserRoom {
+  userId String
+  roomId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roomId]) // ✅ Clé primaire composite
+}
+
+/// 🔹 **Modèle `Player`** : Associe un utilisateur à une salle avec un rôle spécifique
+model Player {
+  id        String   @id @default(uuid())
+  name      String
+  role      String
+  roomId    String
+  userId    String
+  isReady   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// 🔹 **Modèle `Session`** : Gère l'authentification des utilisateurs
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// 🔹 **Modèle `Card`** : Définit les cartes avec un effet JSON
+model Card {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String
+  effect      Json
+  createdAt   DateTime @default(now())
+}
+
+/// 🔹 **Modèle `BugReport`** : Rapports de bugs des utilisateurs
 model BugReport {
   id          BigInt   @id @default(autoincrement())
   user        String?  @db.VarChar
@@ -15,47 +97,9 @@ model BugReport {
   created_at  DateTime @default(now()) @db.Timestamptz(6)
 }
 
-model Card {
-  id          String   @id
-  name        String
-  description String?
-  type        String
-  effect      Json
-  createdAt   DateTime @default(now())
-}
-
-model Player {
-  id        String   @id
-  name      String
-  role      String
-  roomId    String
-  userId    String
-  isReady   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  Room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-}
-
-model Room {
-  id          String        @id
-  sessionId   String?       @unique
-  hostId      String
-  status      RoomStatus    @default(WAITING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime
-  Player      Player[]
-  PlayerRooms PlayerRooms[]
-}
-
-model Session {
-  id        String   @id
-  userId    String   @unique
-  token     String   @unique
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-}
-
+/// 🔹 **Modèle `User_Admin`** : Administrateurs du système
 model User_Admin {
-  id              String   @id
+  id              String   @id @default(uuid())
   name            String
   email           String   @unique
   profile_picture String?
@@ -63,6 +107,7 @@ model User_Admin {
   created_at      DateTime @default(now())
 }
 
+/// 🔹 **Table pivot `PlayerRooms`** pour `Player` <-> `Room`
 model PlayerRooms {
   A    String
   B    String
@@ -73,16 +118,7 @@ model PlayerRooms {
   @@map("_PlayerRooms")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model users {
-  id              String    @id @db.Uuid
-  email           String?   @unique
-  role            String?   @default("user")
-  profile_picture String?
-  status          String?   @default("active")
-  created_at      DateTime? @default(now()) @db.Timestamp(6)
-}
-
+/// 🔹 **Enum `RoomStatus`** : Définition des statuts possibles pour une salle
 enum RoomStatus {
   WAITING
   IN_PROGRESS

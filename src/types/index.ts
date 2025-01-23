@@ -3,11 +3,14 @@
  */
 export interface Player {
   id: string;
-  name: string;
-  role: "marin" | "pirate" | "sirene" | "captain"; // Ajout des rôles de jeu
-  avatar: string; // Ajout pour la gestion des avatars
-  isCaptain: boolean; // Détermine si le joueur est le narrateur
-  roomCode: string; // Permet d'identifier dans quelle room est le joueur
+  username: string;
+  role: "marin" | "pirate" | "sirene" | "captain"; 
+  avatar: string;
+  isCaptain: boolean;
+  roomCode: string;
+  piratePoints?: number;
+  marinPoints?: number;
+  mancheGagnees?: number;
 }
 
 /**
@@ -28,7 +31,18 @@ export type RoomEventType =
   | "PLAYER_LEFT"
   | "NEW_MESSAGE"
   | "GAME_START"
-  | "YOUR_ROLE"; // Ajout de YOUR_ROLE pour informer chaque joueur de son rôle
+  | "YOUR_ROLE"
+  | "VOTE_RESULTS"
+  | "CREW_SELECTED"
+  | "CREW_SELECTION_PHASE"
+  | "CAPTAIN_SELECTED"
+  | "CAPTAIN_CHANGE"
+  | "ACTION_SELECTION" 
+  | "ACTION_RESULTS"
+  | "ROLE_CONFIRMED" 
+  | "VOTE_RESULTS"
+  | "SIRENE_VOTE_UPDATE"
+  | "SIRENE_IDENTIFIED";
 
 /**
  * Interface représentant un événement WebSocket.
@@ -36,12 +50,50 @@ export type RoomEventType =
 export interface RoomEvent {
   type: RoomEventType;
   payload: {
-    roomCode?: string; // Code de la salle
-    message?: string; // Message envoyé
-    username?: string; // Pseudo du joueur concerné
-    players?: Player[]; // Liste complète des joueurs mis à jour
-    role?: string; // Rôle attribué à un joueur spécifique
-    isCaptain?: boolean; // Information si un joueur est le capitaine
-    [key: string]: unknown; // Permet d'ajouter d'autres clés si nécessaire
+    roomCode?: string;
+    message?: string;
+    player?: Player;
+    selectedCrew?: Player[];
+    votesYes?: number;
+    votesNo?: number;
+    approved?: boolean;
+    newCaptain?: string;
+    actions?: { name: string; action: string }[];
+    votes?: { [playerId: string]: number };
+    identifiedSirene?: string;
   };
+}
+
+export interface FooterGameProps {
+  role?: string | null; 
+  piratePoints: number; 
+  marinPoints: number; 
+  mancheGagnees: number;
+  captain: string | null;
+  isCaptain: boolean;
+  roomCode: string;
+  username: string;
+  players: Player[];
+  gameStarted: boolean;
+  crewSelectionPhase: boolean;
+  crewMembers: Player[];
+  votePhase: boolean;
+  currentCaptain: string | null;
+  startGame: () => void;
+  confirmRole: () => void;
+  handleVote: (vote: "yes" | "no") => void;
+  handleAction: (action: string) => void;
+  handleCaptainChange: (newCaptain: string) => void;
+  handleRoleConfirmed: () => void;
+  handleVoteResults: () => void;
+  handleActionResults: () => void;
+  handleCrewSelected: () => void;
+  handleCaptainSelected: () => void;
+  handleCrewSelectionPhase: () => void;
+  handleGameStart: () => void;
+  handleRoomUpdate: (players: Player[]) => void;
+  handlePlayerLeft: (player: Player) => void;
+  handleNewMessage: (message: string) => void;
+  handlePlayerJoined: (player: Player) => void;
+  handleRoleReceived: (role: string) => void;
 }

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'; // Importez useSearchParams
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -52,7 +53,7 @@ export default function SignInPage() {
       <div className="relative h-full flex flex-col items-center justify-center">
         {/* Logo outside white box */}
         <div className="flex flex-col items-center mb-7">
-          <img
+          <Image
             src="./img/ICO_LOGO 1.png"
             alt="Logo ICO"
             className="w-60 h-auto"
@@ -145,14 +146,14 @@ export default function SignInPage() {
           <div className="text-center text-sm mt-4">
             Pas encore de compte ?{' '}
             <Link href="/register" className="text-blue-500 hover:underline">
-              S'inscrire
+              S&apos;inscrire
             </Link>
           </div>
 
           <p className="text-xs text-center text-gray-500 mt-4">
             En vous connectant, vous acceptez nos{' '}
             <Link href="#" className="text-blue-500 hover:underline">
-              conditions d'utilisation
+              conditions d&apos;utilisation
             </Link>
             .
           </p>
