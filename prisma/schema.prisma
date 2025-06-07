@@ -1,14 +1,16 @@
+// Prisma Client Generator
 generator client {
   provider = "prisma-client-js"
 }
 
+// PostgreSQL Connection
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-/// 🔹 **Modèle `User`** : Représente un utilisateur avec ses relations
+/// 🔹 Modèle `User`
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -18,12 +20,12 @@ model User {
 
   // Relations
   players     Player[]
-  hostedRooms Room[]     @relation("HostRooms") // ✅ Un utilisateur peut héberger plusieurs salles
-  sessions    Session? // ✅ Un utilisateur peut avoir une session
-  memberRooms UserRoom[] // ✅ Relation Many-to-Many via une table pivot
+  hostedRooms Room[]     @relation("HostRooms") // Un utilisateur peut héberger plusieurs salles
+  sessions    Session? // Un utilisateur peut avoir une session
+  memberRooms UserRoom[] // Many-to-Many via table pivot
 }
 
-/// 🔹 **Modèle `Room`** : Définit les salles de jeu et les relations avec les joueurs
+/// 🔹 Modèle `Room`
 model Room {
   id        String     @id @default(uuid())
   sessionId String?    @unique
@@ -33,12 +35,13 @@ model Room {
   updatedAt DateTime   @updatedAt
 
   // Relations
-  players Player[]
-  host    User       @relation("HostRooms", fields: [hostId], references: [id], onDelete: Cascade)
-  members UserRoom[] // ✅ Relation Many-to-Many via une table pivot
+  players     Player[]
+  host        User          @relation("HostRooms", fields: [hostId], references: [id], onDelete: Cascade)
+  members     UserRoom[]
+  playerRooms PlayerRooms[] @relation("RoomToPlayerRooms")
 }
 
-/// 🔹 **Table pivot `UserRoom`** pour gérer `User` <-> `Room`
+/// 🔹 Table pivot `UserRoom` (User <-> Room)
 model UserRoom {
   userId String
   roomId String
@@ -46,10 +49,10 @@ model UserRoom {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  @@id([userId, roomId]) // ✅ Clé primaire composite
+  @@id([userId, roomId])
 }
 
-/// 🔹 **Modèle `Player`** : Associe un utilisateur à une salle avec un rôle spécifique
+/// 🔹 Modèle `Player`
 model Player {
   id        String   @id @default(uuid())
   name      String
@@ -64,7 +67,7 @@ model Player {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-/// 🔹 **Modèle `Session`** : Gère l'authentification des utilisateurs
+/// 🔹 Modèle `Session`
 model Session {
   id        String   @id @default(uuid())
   userId    String   @unique
@@ -76,7 +79,7 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-/// 🔹 **Modèle `Card`** : Définit les cartes avec un effet JSON
+/// 🔹 Modèle `Card`
 model Card {
   id          String   @id @default(uuid())
   name        String
@@ -86,7 +89,7 @@ model Card {
   createdAt   DateTime @default(now())
 }
 
-/// 🔹 **Modèle `BugReport`** : Rapports de bugs des utilisateurs
+/// 🔹 Modèle `BugReport`
 model BugReport {
   id          BigInt   @id @default(autoincrement())
   user        String?  @db.VarChar
@@ -97,7 +100,7 @@ model BugReport {
   created_at  DateTime @default(now()) @db.Timestamptz(6)
 }
 
-/// 🔹 **Modèle `User_Admin`** : Administrateurs du système
+/// 🔹 Modèle `User_Admin`
 model User_Admin {
   id              String   @id @default(uuid())
   name            String
@@ -107,18 +110,18 @@ model User_Admin {
   created_at      DateTime @default(now())
 }
 
-/// 🔹 **Table pivot `PlayerRooms`** pour `Player` <-> `Room`
+/// 🔹 Table pivot `PlayerRooms` (Player <-> Room custom)
 model PlayerRooms {
   A    String
   B    String
-  Room Room   @relation(fields: [A], references: [id], onDelete: Cascade)
+  Room Room   @relation("RoomToPlayerRooms", fields: [A], references: [id], onDelete: Cascade)
 
   @@id([A, B], map: "_PlayerRooms_AB_pkey")
   @@index([B], map: "_PlayerRooms_B_index")
   @@map("_PlayerRooms")
 }
 
-/// 🔹 **Enum `RoomStatus`** : Définition des statuts possibles pour une salle
+/// 🔹 Enum `RoomStatus`
 enum RoomStatus {
   WAITING
   IN_PROGRESS
