@@ -25,6 +25,14 @@ CREATE TABLE "Room" (
 );
 
 -- CreateTable
+CREATE TABLE "UserRoom" (
+    "userId" TEXT NOT NULL,
+    "roomId" TEXT NOT NULL,
+
+    CONSTRAINT "UserRoom_pkey" PRIMARY KEY ("userId","roomId")
+);
+
+-- CreateTable
 CREATE TABLE "Player" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -61,6 +69,19 @@ CREATE TABLE "Card" (
 );
 
 -- CreateTable
+CREATE TABLE "BugReport" (
+    "id" BIGSERIAL NOT NULL,
+    "user" VARCHAR,
+    "email" VARCHAR,
+    "subject" VARCHAR(50),
+    "description" TEXT,
+    "priority" VARCHAR,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BugReport_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_PlayerRooms" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
@@ -87,6 +108,12 @@ CREATE INDEX "_PlayerRooms_B_index" ON "_PlayerRooms"("B");
 ALTER TABLE "Room" ADD CONSTRAINT "Room_hostId_fkey" FOREIGN KEY ("hostId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "UserRoom" ADD CONSTRAINT "UserRoom_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserRoom" ADD CONSTRAINT "UserRoom_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Player" ADD CONSTRAINT "Player_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -97,6 +124,3 @@ ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "_PlayerRooms" ADD CONSTRAINT "_PlayerRooms_A_fkey" FOREIGN KEY ("A") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_PlayerRooms" ADD CONSTRAINT "_PlayerRooms_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

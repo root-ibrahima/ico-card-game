@@ -97,29 +97,26 @@ npm install
 yarn install
 ```
 
-Créez un fichier `.env.local` et ajoutez-y les clés nécessaires :
+Créez un fichier `.env` et ajoutez-y les clés nécessaires :
 
 ```env
-# WebSocket
+# WebSocket (local development)
 NEXT_PUBLIC_WEBSOCKET_URL="ws://localhost:5000"
 
-# API
+# Next.js API (local development)
 NEXT_PUBLIC_API_URL="http://localhost:3000/api"
+NEXT_PUBLIC_SUPABASE_URL=https://vvwibockupxqanknxjng.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2d2lib2NrdXB4cWFua254am5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0MTU0ODgsImV4cCI6MjA2NTk5MTQ4OH0.RadFQWs59pxOSoawRYfh7GRg_ER9dL6xw27jTU0_KkE
+            
+# Connect to Supabase via connection pooling
+DATABASE_URL="postgresql://postgres.vvwibockupxqanknxjng:ibrahima-eemi@aws-0-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL="https://shddkejukrddghgmddmb.supabase.co"
+# Direct connection to the database. Used for migrations
+DIRECT_URL="postgresql://postgres.vvwibockupxqanknxjng:ibrahima-eemi@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
 
-NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoZGRrZWp1a3JkZGdoZ21kZG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzczMTUsImV4cCI6MjA1MjM1MzMxNX0.iSuYjhzTSfYoPMw7Gggsudc_imNR22x-SOgRH8uVAK0"
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoZGRrZWp1a3JkZGdoZ21kZG1iIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjc3NzMxNSwiZXhwIjoyMDUyMzUzMzE1fQ.h0BKZBdbFHkeYEu_SJKyoK9I4zEtcIkXe4zoG_cceAc"
-
-
-# Database (Prisma)
-DATABASE_URL="postgresql://postgres.shddkejukrddghgmddmb:Randorisec69*@aws-0-us-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.shddkejukrddghgmddmb:Randorisec69*@aws-0-us-west-1.pooler.supabase.com:5432/postgres"
-
+# SMTP Gmail App (emailing service) - GARDER TEL QUEL
 EMAIL_APP_USER="alex2709.meme@gmail.com"
 EMAIL_APP_PASSWORD="cmob kiwc sbdf ebkf"
-
 ```
 
 ## Initialisation de la base de données
