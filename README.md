@@ -85,7 +85,7 @@ ICO-CARD-GAME/
 Clonez le projet :
 
 ```bash
-git clone https://github.com/ibrahima-eemi/ico-card-game.git
+git clone https://github.com/root-ibrahima/onlyflick.git
 cd ico-card-game
 ```
 
